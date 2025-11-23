@@ -1,43 +1,37 @@
-# Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
+title: "Yuyeyyy 的图形学小站"        # 网站标题（浏览器标签 / 页头）
+description: "记录Unity渲染、Shader、图形学学习笔记。"  # 简短描述
+lang: "zh-CN"
+timezone: "Asia/Tokyo"
 
-on:
-  # Runs on pushes targeting the default branch
-  push:
-    branches: ["main"]
+# 你 GitHub 的用户名和仓库名（记得改成自己的）
+url: "https://yuyeyyy.github.io"      # 你的 GitHub Pages 域名
+baseurl: ""                           # 若是 username.github.io，保持空字符串
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+author:
+  name: "yuyeyyy"
+  email: "youremail@example.com"
+  avatar: "/assets/avatar.png"        # 可选：头像路径
+  bio: "Unity 图形 / Shader / PBR / SSS / Hair 渲染研究中。"
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+# 社交链接（可删掉不用的）
+social_links:
+  github: "https://github.com/yuyeyyy"
+  twitter: "https://x.com/yourname"
+  bilibili: "https://space.bilibili.com/xxxxxxx"
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+# 使用的主题
+theme: minima
 
-jobs:
-  # Single deploy job since we're just deploying
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # Upload entire repository
-          path: '.'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+# 导航栏（顶部菜单）
+header_pages:
+  - index.md
+  - about.md
+
+# Markdown/高亮设置（保持默认即可）
+markdown: kramdown
+highlighter: rouge
+
+# 插件（GitHub Pages 支持的插件）
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
