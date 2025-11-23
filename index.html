@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>Yuyeyyy 的图形学小站</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="记录 Unity 渲染、Shader 与图形学学习笔记的个人站点。" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, "Noto Sans SC", "PingFang SC", sans-serif;
+      line-height: 1.7;
+      background: #050510;
+      color: #f5f5f5;
+    }
+
+    a {
+      color: #62d6ff;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      background: rgba(5, 5, 16, 0.9);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 1.2rem;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.8rem 0;
+    }
+
+    .nav-title {
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .nav-links a {
+      margin-left: 1.2rem;
+      font-size: 0.95rem;
+      opacity: 0.8;
+    }
+
+    .nav-links a:hover {
+      opacity: 1;
+    }
+
+    main {
+      padding: 2rem 0 3rem;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.3fr);
+      gap: 2rem;
+      align-items: center;
+      margin-bottom: 3rem;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 3vw, 2.5rem);
+      margin-bottom: 0.6rem;
+    }
+
+    .hero-subtitle {
+      font-size: 0.98rem;
+      color: #cfcfcf;
+      margin-bottom: 1.3rem;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .tag {
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 0.15rem 0.7rem;
+      font-size: 0.78rem;
+      opacity: 0.9;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #5b8bff, #9f6bff);
+      border: none;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.05);
+    }
+
+    .avatar-wrap {
+      text-align: center;
+    }
+
+    .avatar {
+      width: 180px;
+      height: 180px;
+      border-radius: 24px;
+      image-rendering: pixelated; /* 更像像素画 */
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6);
+      object-fit: cover;
+    }
+
+    section {
+      margin-bottom: 2.8rem;
+    }
+
+    section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .section-desc {
+      font-size: 0.9rem;
+      color: #c2c2c2;
+      margin-bottom: 1.1rem;
+    }
+
+    .card-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.1rem;
+    }
+
+    .card {
+      border-radius: 16px;
+      padding: 1rem 1rem 0.9rem;
+      background: radial-gradient(circle at top left, #191933, #090915);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .card-meta {
+      font-size: 0.8rem;
+      color: #aaaaaa;
+      margin-bottom: 0.4rem;
+    }
+
+    .card p {
+      font-size: 0.88rem;
+      color: #d7d7d7;
+      margin-bottom: 0.4rem;
+    }
+
+    footer {
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 1.4rem 0 2rem;
+      font-size: 0.8rem;
+      color: #a7a7a7;
+      text-align: center;
+    }
+
+    @media (max-width: 720px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .avatar-wrap {
+        order: -1;
+      }
+
+      .nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+      }
+
+      .nav-links {
+        display: flex;
+        flex-wrap: wrap;
+      }
+
+      .nav-links a {
+        margin-left: 0;
+        margin-right: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container nav">
+      <div class="nav-title">YUYEYYY / GRAPHICS</div>
+      <nav class="nav-links">
+        <a href="#blog">博客</a>
+        <a href="#projects">项目</a>
+        <a href="#about">关于</a>
+        <a href="https://github.com/yuyeyyy" target="_blank">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- 顶部介绍 -->
+    <section class="hero">
+      <div>
+        <h1 class="hero-title">你好，我是 Yuyeyyy 👋</h1>
+        <p class="hero-subtitle">
+          在做 Unity / URP 渲染与 Shader 相关开发。这里记录图形学、PBR、皮肤与头发渲染、
+          Portal、水体、体积光等各种折腾笔记。
+        </p>
+
+        <div class="hero-tags">
+          <span class="tag">Unity URP</span>
+          <span class="tag">PBR / BRDF</span>
+          <span class="tag">SSS / 头发渲染</span>
+          <span class="tag">图形学基础</span>
+        </div>
+
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#blog">查看最新文章</a>
+          <a class="btn" href="#projects">看看我做的效果</a>
+        </div>
+      </div>
+
+      <div class="avatar-wrap">
+        <!-- 这里换成你的像素头像，比如 /assets/avatar.png -->
+        <img class="avatar" src="assets\me.png" alt="头像" />
+      </div>
+    </section>
+
+    <!-- 博客列表（可以先手动写，之后换成 Jekyll 生成） -->
+    <section id="blog">
+      <h2>📚 最近更新</h2>
+      <p class="section-desc">
+        一些关于渲染技术、Shader 实现细节和踩坑记录。如果你也在做实时渲染，应该会有点参考价值。
+      </p>
+
+      <div class="card-list">
+        <article class="card">
+          <h3>
+            <a href="#">自定义 PBR 与 Unity Lit 的差异拆解</a>
+          </h3>
+          <div class="card-meta">2025-11-23 · Shader / PBR</div>
+          <p>
+            记录我如何从零写一套 PBR，并对比 Unity URP/Lit：为什么要改 BRDF、为什么要拆近场和远场光照。
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>
+            <a href="#">基于厚度图的皮肤 SSS：预积分 LUT 实战</a>
+          </h3>
+          <div class="card-meta">2025-11-15 · Skin / SSS</div>
+          <p>
+            从厚度图获取数据、生成 SSS kernel，再到 LUT 采样和屏幕空间模糊的一条完整流程示例。
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>
+            <a href="#">Kajiya-Kay &amp; “类 Marschner” 头发高光</a>
+          </h3>
+          <div class="card-meta">2025-11-05 · Hair</div>
+          <p>
+            为什么用两条 Kajiya 高光来近似 Marschner，多分支高光在头发体积感中的作用是什么。
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 项目 / Demo 简介 -->
+    <section id="projects">
+      <h2>🧪 一些渲染实验</h2>
+      <p class="section-desc">
+        正在开发或已完成的效果 Demo，未来会陆续整理成文章和开源仓库。
+      </p>
+
+      <div class="card-list">
+        <div class="card">
+          <h3>Tequila Sunset 动态天空盒</h3>
+          <p>
+            仿《极乐迪斯科》的龙舌兰日落风格天空，带大气散射、日夜循环和体积云雾的尝试。
+          </p>
+        </div>
+        <div class="card">
+          <h3>Inception 风格 Portal</h3>
+          <p>
+            使用 URP ScriptableRendererFeature 实现的多相机 Portal，支持折射、边缘 FX 和多层嵌套。
+          </p>
+        </div>
+        <div class="card">
+          <h3>水体 &amp; 草地交互</h3>
+          <p>
+            通过深度、法线与顶点动画实现风动草地和角色交互波纹，兼顾移动端性能优化。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 关于 -->
+    <section id="about">
+      <h2>👤 关于我</h2>
+      <p class="section-desc">
+        Unity 图形 / Shader 爱好者，偏技术美术 / 渲染工程方向。喜欢把“看起来很玄学”的效果拆成
+        数学和代码，再一点点还原出来。
+      </p>
+      <p style="font-size: 0.9rem; color:#d5d5d5;">
+        这个站会集中记录：图形学基础复习提纲、渲染管线学习笔记、Unity URP 实战 Shader、
+        以及一些面向面试的问答整理。如果你看到有 bug 或更好的实现方式，欢迎在
+        <a href="https://github.com/yuyeyyy" target="_blank">GitHub</a>
+        上提 Issue / PR。
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    © <span id="year"></span> Yuyeyyy · Built with ♥ and GitHub Pages
+  </footer>
+
+  <script>
+    // 自动更新年份
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
