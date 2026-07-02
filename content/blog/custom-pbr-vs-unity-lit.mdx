@@ -1,0 +1,23 @@
+---
+title: "自定义 PBR 与 Unity Lit 的差异拆解"
+date: "2025-11-23"
+category: "Shader / PBR"
+description: "自定义 PBR 与 Unity Lit 的差异拆解"
+---
+
+> 本文记录从 Unity Lit 迁到自定义 PBR 时踩过的坑与差异点，主要关注 BRDF 项、能量守恒、几何可见性函数的差异。
+
+{/* TODO: 正文待补 */}
+
+## 引言
+
+Unity URP 的 Lit shader 用的是简化的金属流 PBR（基于 Disney / GGX），多数场景下够用，
+但一旦想做更「物理正确」的渲染管线，自定义 PBR 就躲不开。本文整理我从 Unity Lit 迁到
+自写 PBR 时遇到的几个核心差异：
+
+- **法线分布 D 项**：URP 用的 GGX/Smith，自己实现时要注意 `alpha = roughness^2` 还是 `roughness^4`。
+- **几何遮挡 G 项**：Smith vs Schlick-GGX 近似，可见性项 `V = G / (4 N·L N·V)` 的合并写法。
+- **菲涅尔 F 项**：Schlick 近似的 `F0` 取值，金属流和非金属流的处理。
+- **能量守恒**：漫反射项要不要乘 `(1 - F)`，金属流要不要清零漫反射。
+
+{/* TODO: 每个章节补充公式 + 代码 + 截图对比 */}

@@ -1,0 +1,24 @@
+---
+title: "Kajiya-Kay & \"类 Marschner\" 头发高光"
+date: "2025-11-05"
+category: "Hair"
+description: "Kajiya-Kay & \"类 Marschner\" 头发高光"
+---
+
+> 本文对比 Kajiya-Kay 经典头发高光模型与「类 Marschner」基于方位角函数的实现，记录两者差异与切换成本。
+
+{/* TODO: 正文待补 */}
+
+## 引言
+
+头发渲染里最经典的就是 Kajiya-Kay 模型，它用「切线在光照平面上的投影」做 specular，
+计算便宜，效果也还过得去。但要做到更接近真实的高光形态（M 线、长发丝分离），就得
+上 Marschner 的完整模型。
+
+本文记录：
+
+- Kajiya-Kay 的数学推导与 Shader 实现。
+- 「类 Marschner」简化方案：用方位角函数拟合 M 项，避开完整 Marschner 的复杂度。
+- 两者在 URP 里的成本对比与切换踩坑。
+
+{/* TODO: 数学推导、Shader 代码、对比截图、性能数据 */}
