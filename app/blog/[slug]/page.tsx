@@ -14,6 +14,8 @@ import {
 } from "@/lib/posts";
 import ReadingProgress from "@/components/ReadingProgress";
 import TableOfContents from "@/components/TableOfContents";
+import CodeBlockEnhancer from "@/components/CodeBlockEnhancer";
+import Comments from "@/components/Comments";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -111,6 +113,8 @@ export default async function PostPage({ params }: PageProps) {
               />
             </div>
 
+            <CodeBlockEnhancer />
+
             {/* 上下篇导航 */}
             {(prev || next) && (
               <nav
@@ -137,9 +141,11 @@ export default async function PostPage({ params }: PageProps) {
                 ) : null}
               </nav>
             )}
+
+            {/* 评论 */}
+            <Comments />
           </article>
 
-          {/* 右侧：目录（桌面端） */}
           <aside className="hidden lg:block">
             <TableOfContents headings={headings} />
           </aside>
