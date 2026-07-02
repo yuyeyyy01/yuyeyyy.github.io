@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Search, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { fadeUp, staggerContainer, staggerItem } from "@/lib/motion";
+import { BASE_PATH } from "@/lib/site";
 
 /**
  * 搜索结果项 —— 来自 pagefind 的 JS API。
@@ -34,7 +35,7 @@ interface PagefindModule {
   }>;
 }
 
-const BASE_PATH = "/yuyeyyy.github.io";
+// basePath 从 lib/site 统一管理（迁移平台时只改一处）
 
 /**
  * 把 pagefind 返回的 url 规范化为 next/link 可用的相对路径。
@@ -71,7 +72,7 @@ export default function SearchPage() {
     (async () => {
       try {
         const mod = (await import(
-          /* @vite-ignore */ window.location.origin + "/yuyeyyy.github.io/pagefind/pagefind.js"
+          /* @vite-ignore */ window.location.origin + `${BASE_PATH}/pagefind/pagefind.js`
         )) as PagefindModule;
         if (cancelled) return;
         await mod.init();

@@ -4,8 +4,12 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 import rehypeSlug from "rehype-slug";
 import rehypePrettyCode from "rehype-pretty-code";
+import rehypeKatex from "rehype-katex";
+// KaTeX 样式：静态导出下会打进全局 CSS
+import "katex/dist/katex.min.css";
 import {
   getAllPosts,
   getPost,
@@ -16,6 +20,10 @@ import ReadingProgress from "@/components/ReadingProgress";
 import TableOfContents from "@/components/TableOfContents";
 import CodeBlockEnhancer from "@/components/CodeBlockEnhancer";
 import Comments from "@/components/Comments";
+import Scene from "@/components/Scene";
+import ShaderDemo from "@/components/ShaderDemo";
+import Figure from "@/components/Figure";
+import Video from "@/components/Video";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -97,7 +105,7 @@ export default async function PostPage({ params }: PageProps) {
                 source={post.content}
                 options={{
                   mdxOptions: {
-                    remarkPlugins: [remarkGfm],
+                    remarkPlugins: [remarkGfm, remarkMath],
                     rehypePlugins: [
                       rehypeSlug,
                       [
@@ -107,9 +115,11 @@ export default async function PostPage({ params }: PageProps) {
                           keepBackground: false,
                         },
                       ],
+                      rehypeKatex,
                     ],
                   },
                 }}
+                components={{ Scene, ShaderDemo, Figure, Video }}
               />
             </div>
 

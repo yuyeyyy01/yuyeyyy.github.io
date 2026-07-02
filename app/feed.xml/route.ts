@@ -1,9 +1,8 @@
 import { Feed } from "feed";
 import { getAllPosts } from "@/lib/posts";
+import { SITE_URL } from "@/lib/site";
 
 export const dynamic = "force-static";
-
-const SITE_URL = "https://yuyeyyy01.github.io/yuyeyyy.github.io";
 
 export async function GET() {
   const posts = getAllPosts();

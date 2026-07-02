@@ -155,3 +155,36 @@ half3 SkinDiffuse(float3 N, float3 L, float3 V, float2 uv, half3 albedo, half ro
 
 整体方案在移动端跑得动，效果对得起成本。要再进一步就是 separable SSS（双 pass blur）或
 burley normalized SSS，但那已经需要 MRT + 多 pass，不在本文范围。
+
+## 测试：公式与 3D
+
+行内公式测试：爱因斯坦质能方程 $E = mc^2$ 是最经典的行内例子，再试曲率 $k = 1/r$。
+
+块公式测试：高斯积分
+
+$$
+\int_{-\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}
+$$
+
+以及 LUT 用到的散射核卷积（简化形式）：
+
+$$
+LUT(\rho, N\!\cdot\!L) = \int_{\Omega} BSSRDF(\rho, N\!\cdot\!L, \omega) \, d\omega
+$$
+
+下面是一个可交互 3D demo，鼠标拖拽旋转、滚轮缩放：
+
+<Scene autoRotate />
+
+带自定义 mesh 的示例（传 children）：
+
+<Scene>
+  <mesh rotation={[0.3, 0.8, 0]}>
+    <icosahedronGeometry args={[1.3, 1]} />
+    <meshStandardMaterial color="#5e5ce6" metalness={0.4} roughness={0.3} flatShading />
+  </mesh>
+</Scene>
+
+全屏 shader demo（默认 uv 渐变）：
+
+<ShaderDemo />

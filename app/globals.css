@@ -34,6 +34,11 @@
   --accent: #0a84ff;
   --accent-foreground: #ffffff;
   --ring: #0a84ff;
+
+  /* 环境背景层：顶部蓝光 + 底部紫光 + 星尘点阵 */
+  --bg-glow-1: rgba(10, 132, 255, 0.12);
+  --bg-glow-2: rgba(94, 92, 230, 0.08);
+  --bg-dot: rgba(255, 255, 255, 0.03);
 }
 
 /* ---------- 浅色主题 ---------- */
@@ -50,6 +55,11 @@
   --accent: #0071e3;
   --accent-foreground: #ffffff;
   --ring: #0071e3;
+
+  /* 环境背景层：浅色下更克制，避免发灰 */
+  --bg-glow-1: rgba(0, 113, 227, 0.08);
+  --bg-glow-2: rgba(94, 92, 230, 0.05);
+  --bg-dot: rgba(0, 0, 0, 0.035);
 }
 
 /* ---------- 基础重置 ---------- */
@@ -66,6 +76,76 @@ body {
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.01em;
   transition: background-color 0.3s ease, color 0.3s ease;
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 环境背景层：顶部蓝光晕 + 底部紫光晕，呼应"光谱/渲染"主题。
+   fixed 定位、pointer-events:none，只作氛围不参与交互。
+   通过 body::before 承载，sticky Header 的毛玻璃能透出这层光环境。 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      60% 50% at 50% -8%,
+      var(--bg-glow-1) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 40% at 85% 108%,
+      var(--bg-glow-2) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      40% 30% at 12% 90%,
+      var(--bg-glow-1) 0%,
+      transparent 75%
+    );
+  background-repeat: no-repeat;
+  animation: bg-breathe 24s ease-in-out infinite;
+}
+
+/* 星尘点阵纹理：极淡的圆点网格，像优质纸张的微纹理。
+   随光晕一起超慢呼吸，增加空间深度，绝不喧宾夺主。 */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(
+    var(--bg-dot) 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
+  background-position: 0 0;
+  mask-image: radial-gradient(
+    80% 60% at 50% 30%,
+    #000 0%,
+    transparent 85%
+  );
+  -webkit-mask-image: radial-gradient(
+    80% 60% at 50% 30%,
+    #000 0%,
+    transparent 85%
+  );
+  animation: bg-breathe 24s ease-in-out infinite;
+}
+
+/* 光晕/点阵超慢呼吸：opacity 在 0.7~1 间游移，让背景"活着"但不打扰阅读 */
+@keyframes bg-breathe {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* 主题切换时整个页面柔和过渡 */
