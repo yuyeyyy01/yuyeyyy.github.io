@@ -86,7 +86,7 @@ export default function Video({
     // B 站官方嵌入式外链播放器：仅传 bvid 即可，player 内部解析 cid。
     // danmaku=0 关弹幕、autoplay=0 不自动播放、high_quality=1 默认高画质。
     // referrerPolicy=no-referrer 避免某些场景下 Referer 校验导致空白。
-    // sandbox 仅放开播放所需能力，不加 allow-same-origin 会让 player 跳转失败。
+    // 用 allow="fullscreen;..." 表达权限，不再叠加旧属性 allowFullScreen（否则浏览器告警冗余）。
     media = (
       <iframe
         src={`https://player.bilibili.com/player.html?bvid=${bv}&page=1&high_quality=1&danmaku=0&autoplay=0&as_wide=1`}
@@ -95,7 +95,6 @@ export default function Video({
         scrolling="no"
         referrerPolicy="no-referrer"
         allow="fullscreen; encrypted-media; picture-in-picture; autoplay"
-        allowFullScreen
         className="h-full w-full"
       />
     );
@@ -105,8 +104,7 @@ export default function Video({
         src={`https://www.youtube.com/embed/${youtube}`}
         title={caption ?? "YouTube 视频"}
         loading="lazy"
-        allowFullScreen
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
         className="h-full w-full"
       />
     );
