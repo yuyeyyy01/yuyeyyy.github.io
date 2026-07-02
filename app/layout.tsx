@@ -3,18 +3,19 @@ import "./globals.css";
 import ThemeProvider from "@/components/theme-provider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { SITE, SITE_URL } from "@/lib/site";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://yuyeyyy01.github.io/yuyeyyy.github.io/"),
+  metadataBase: new URL(SITE_URL + "/"),
   title: {
-    default: "Yuyeyyy — 图形与渲染",
+    default: SITE.title,
     template: "%s — Yuyeyyy",
   },
-  description: "Unity 渲染、Shader 与图形学学习笔记。",
+  description: SITE.description,
   openGraph: {
     type: "website",
     locale: "zh_CN",
-    siteName: "Yuyeyyy — 图形与渲染",
+    siteName: SITE.title,
   },
 };
 
