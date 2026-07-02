@@ -4,13 +4,13 @@ lang: "zh-CN"
 timezone: "Asia/Tokyo"
 
 # 你 GitHub 的用户名和仓库名（记得改成自己的）
-url: "https://yuyeyyy.github.io"      # 你的 GitHub Pages 域名
-baseurl: ""                           # 若是 username.github.io，保持空字符串
+url: "https://yuyeyyy01.github.io"    # 用户站点根域名（去掉子路径）
+baseurl: ""                           # username.github.io 保持空字符串
 
 author:
   name: "yuyeyyy"
   email: "youremail@example.com"
-  avatar: "/assets/avatar.png"        # 可选：头像路径
+  avatar: "/assets/me.png"            # 头像路径（与 index.html 中实际文件一致）
   bio: "Unity 图形 / Shader / PBR / SSS / Hair 渲染研究中。"
 
 # 社交链接（可删掉不用的）
@@ -35,3 +35,8 @@ highlighter: rouge
 plugins:
   - jekyll-feed
   - jekyll-sitemap
+
+# index.html 是纯静态首页，不经过 Jekyll 主题模板渲染
+# 排除多余文件被 Jekyll 处理
+exclude:
+  - README.md
