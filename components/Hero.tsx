@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useMotionValue, useSpring, useScroll, useTransform } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import avatarImg from "@/public/assets/me.png";
 import { staggerContainer, staggerItem, easeOut, DUR } from "@/lib/motion";
@@ -34,6 +34,17 @@ export default function Hero() {
     my.set(0);
   }
 
+  // 锚点跳转：程序化平滑滚动，不依赖全局 scroll-behavior（避免影响手动滚轮）
+  function handleAnchorClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+    if (href.startsWith("#") && href.length > 1) {
+      const el = document.querySelector(href);
+      if (el) {
+        e.preventDefault();
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }
+  }
+
   // 各层位移：越靠上层系数越大，制造近大远小
   const avatarX = useTransform(sx, [-1, 1], [-6, 6]);
   const avatarY = useTransform(sy, [-1, 1], [-6, 6]);
@@ -42,24 +53,19 @@ export default function Hero() {
   const subX = useTransform(sx, [-1, 1], [-2, 2]);
   const subY = useTransform(sy, [-1, 1], [-2, 2]);
 
-  // ---- 滚动视差：背景光晕随滚动上移（仅 Hero 区高度范围内）----
-  const { scrollY } = useScroll();
-  const glowY = useTransform(scrollY, [0, 600], [0, -60]);
-
   return (
     <section
       className="container-page relative py-24 md:py-32"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      {/* 背景光晕（滚动视差层）：比内容更"远"，随滚动缓慢上移 */}
-      <motion.div
+      {/* 背景光晕：静态显示，不做滚动视差（视差会在滚到顶时产生惯性回弹错觉） */}
+      <div
         aria-hidden
-        style={{ y: glowY }}
         className="pointer-events-none absolute inset-x-0 -top-10 h-72 opacity-70"
       >
         <div className="mx-auto h-full max-w-3xl bg-[radial-gradient(60%_50%_at_50%_0%,var(--bg-glow-1)_0%,transparent_70%)]" />
-      </motion.div>
+      </div>
 
       <motion.div
         variants={staggerContainer}
@@ -108,7 +114,11 @@ export default function Hero() {
             查看文章
             <ArrowRight size={16} className="-translate-y-px" />
           </Link>
-          <Link href="#projects" className="btn-secondary px-6 py-3 text-sm">
+          <Link
+            href="#projects"
+            onClick={(e) => handleAnchorClick(e, "#projects")}
+            className="btn-secondary px-6 py-3 text-sm"
+          >
             看看效果
           </Link>
         </motion.div>
@@ -117,6 +127,7 @@ export default function Hero() {
       {/* 滚动提示：底部小箭头 + 文字缓慢浮动，引导向下 */}
       <motion.a
         href="#projects"
+        onClick={(e) => handleAnchorClick(e, "#projects")}
         aria-label="向下滚动查看更多"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
