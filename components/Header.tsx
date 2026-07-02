@@ -43,6 +43,7 @@ export default function Header() {
         <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <NavLink href="/blog/">博客</NavLink>
           <NavLink href="/about/">关于</NavLink>
+          <NavLink href="/search/">搜索</NavLink>
           <motion.a
             href="https://github.com/yuyeyyy"
             target="_blank"
