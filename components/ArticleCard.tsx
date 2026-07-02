@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
-import { fadeUp, whileInViewConfig } from "@/lib/motion";
+import { motion, type Variants } from "framer-motion";
+import { fadeUp, staggerItem, whileInViewConfig } from "@/lib/motion";
 
 export interface ArticleCardProps {
   /** 文章 slug，用于生成 `/blog/<slug>/` 链接 */
@@ -16,12 +16,15 @@ export interface ArticleCardProps {
   category: string;
   /** 摘要描述 */
   excerpt: string;
+  /** 入场动效变体：默认独立 fadeUp；传 staggerItem 时继承父容器错落入场 */
+  entryVariant?: Variants;
 }
 
 /**
  * 苹果风文章卡片。
  * 整卡可点击跳转到 `/blog/<slug>/`，hover 时柔和上移 + 阴影 + 加深边框。
- * 滚动进入视口时淡入上移（whileInView，只触发一次）。
+ * 滚动进入视口时淡入上移（whileInView，只触发一次）；
+ * 若 entryVariant 传入 staggerItem，则改为继承父 motion 容器错落入场。
  */
 export default function ArticleCard({
   slug,
@@ -29,7 +32,14 @@ export default function ArticleCard({
   date,
   category,
   excerpt,
+  entryVariant = fadeUp,
 }: ArticleCardProps) {
+  // 独立入场用 whileInView；继承父容器时只设 variants，由父级 stagger 驱动
+  const entryProps =
+    entryVariant === staggerItem
+      ? { variants: entryVariant }
+      : { variants: entryVariant, ...whileInViewConfig, viewport: { once: true, margin: "-60px" } };
+
   return (
     <Link
       href={`/blog/${slug}/`}
@@ -37,9 +47,7 @@ export default function ArticleCard({
       aria-label={title}
     >
       <motion.article
-        variants={fadeUp}
-        {...whileInViewConfig}
-        viewport={{ once: true, margin: "-60px" }}
+        {...entryProps}
         className="card flex h-full flex-col p-6 transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:border-[var(--border-strong)] group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
       >
         {/* 顶部元信息：日期 · 分类 */}

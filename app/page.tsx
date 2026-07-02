@@ -6,7 +6,12 @@ import ProjectCard, { type ProjectCardProps } from "@/components/ProjectCard";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { fadeUp, whileInViewConfig } from "@/lib/motion";
+import {
+  fadeUp,
+  staggerContainer,
+  staggerItem,
+  whileInViewConfig,
+} from "@/lib/motion";
 
 const RECENT_ARTICLES: ArticleCardProps[] = [
   {
@@ -80,11 +85,16 @@ export default function Home() {
           </p>
         </motion.header>
 
-        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <motion.div
+          variants={staggerContainer}
+          {...whileInViewConfig}
+          viewport={{ once: true, margin: "-60px" }}
+          className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3"
+        >
           {RECENT_ARTICLES.map((a) => (
-            <ArticleCard key={a.slug} {...a} />
+            <ArticleCard key={a.slug} {...a} entryVariant={staggerItem} />
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* 渲染实验 */}
@@ -106,11 +116,16 @@ export default function Home() {
           </p>
         </motion.header>
 
-        <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
+        <motion.div
+          variants={staggerContainer}
+          {...whileInViewConfig}
+          viewport={{ once: true, margin: "-60px" }}
+          className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3"
+        >
           {RENDER_PROJECTS.map((p) => (
-            <ProjectCard key={p.title} {...p} />
+            <ProjectCard key={p.title} {...p} entryVariant={staggerItem} />
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* 关于我 */}

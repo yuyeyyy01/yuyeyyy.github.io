@@ -326,3 +326,19 @@ code {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- Hero 滚动提示：小箭头缓慢上下浮动 ---------- */
+.hero-scroll-cue {
+  animation: hero-cue-float 2.4s ease-in-out infinite;
+}
+@keyframes hero-cue-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
