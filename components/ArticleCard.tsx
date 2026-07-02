@@ -69,17 +69,14 @@ export default function ArticleCard({
           {excerpt}
         </p>
 
-        {/* 底部：阅读 + 箭头 */}
+        {/* 底部：阅读 + 箭头，整卡 hover 时箭头滑出 */}
         <div className="mt-auto flex items-center gap-1 pt-6 text-xs text-[var(--foreground-muted)] transition-colors duration-300 group-hover:text-[var(--accent)]">
           <span>阅读</span>
-          <motion.span
-            className="inline-flex"
-            initial={{ opacity: 0.7, x: 0 }}
-            whileHover={{ opacity: 1, x: 4 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <ArrowRight size={14} aria-hidden />
-          </motion.span>
+          <ArrowRight
+            size={14}
+            aria-hidden
+            className="inline-flex transition-transform duration-300 ease-out group-hover:translate-x-1"
+          />
         </div>
       </motion.article>
     </Link>

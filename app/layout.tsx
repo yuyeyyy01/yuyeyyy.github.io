@@ -5,11 +5,17 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://yuyeyyy01.github.io/yuyeyyy.github.io/"),
   title: {
     default: "Yuyeyyy — 图形与渲染",
     template: "%s — Yuyeyyy",
   },
   description: "Unity 渲染、Shader 与图形学学习笔记。",
+  openGraph: {
+    type: "website",
+    locale: "zh_CN",
+    siteName: "Yuyeyyy — 图形与渲染",
+  },
 };
 
 export default function RootLayout({
