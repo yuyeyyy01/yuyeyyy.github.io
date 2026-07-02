@@ -1,0 +1,48 @@
+import type { MetadataRoute } from "next";
+import { getAllPosts } from "@/lib/posts";
+
+export const dynamic = "force-static";
+
+// 站点根 URL（含 basePath），用于拼接完整 URL
+const SITE_URL = "https://yuyeyyy01.github.io/yuyeyyy.github.io";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const posts = getAllPosts();
+  const now = new Date();
+
+  // 静态页面：首页、关于、博客列表
+  const staticRoutes: MetadataRoute.Sitemap = [
+    {
+      url: `${SITE_URL}/`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 1,
+    },
+    {
+      url: `${SITE_URL}/about/`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/blog/`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+  ];
+
+  // 每篇文章一个条目，lastModified 用文章 date
+  const postRoutes: MetadataRoute.Sitemap = posts.map((post) => {
+    const parsed = Date.parse(post.date);
+    const lastModified = Number.isNaN(parsed) ? now : new Date(parsed);
+    return {
+      url: `${SITE_URL}/blog/${post.slug}/`,
+      lastModified,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    };
+  });
+
+  return [...staticRoutes, ...postRoutes];
+}

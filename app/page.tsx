@@ -40,16 +40,19 @@ const RENDER_PROJECTS: ProjectCardProps[] = [
     title: "Tequila Sunset 动态天空盒",
     description:
       "仿《极乐迪斯科》的龙舌兰日落风格天空，带大气散射、日夜循环和体积云雾的尝试。",
+    href: "https://github.com/yuyeyyy",
   },
   {
     title: "Inception 风格 Portal",
     description:
       "使用 URP ScriptableRendererFeature 实现的多相机 Portal，支持折射、边缘 FX 和多层嵌套。",
+    href: "https://github.com/yuyeyyy",
   },
   {
     title: "水体 & 草地交互",
     description:
       "通过深度、法线与顶点动画实现风动草地和角色交互波纹，兼顾移动端性能优化。",
+    href: "https://github.com/yuyeyyy",
   },
 ];
 

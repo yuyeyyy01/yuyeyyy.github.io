@@ -1,9 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { getAllPosts, getPost } from "@/lib/posts";
+import remarkGfm from "remark-gfm";
+import rehypeSlug from "rehype-slug";
+import rehypePrettyCode from "rehype-pretty-code";
+import {
+  getAllPosts,
+  getPost,
+  getAdjacentPosts,
+  extractHeadings,
+} from "@/lib/posts";
+import ReadingProgress from "@/components/ReadingProgress";
+import TableOfContents from "@/components/TableOfContents";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -22,6 +32,12 @@ export async function generateMetadata({
   return {
     title: post.title,
     description: post.description,
+    openGraph: {
+      title: post.title,
+      description: post.description,
+      type: "article",
+      publishedTime: post.date,
+    },
   };
 }
 
@@ -43,34 +59,139 @@ export default async function PostPage({ params }: PageProps) {
     notFound();
   }
 
-  return (
-    <main className="container-page mx-auto max-w-2xl py-24">
-      <article>
-        <header className="mb-12">
-          <p className="text-sm uppercase tracking-widest text-[var(--foreground-muted)]">
-            {post.category}
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl">
-            {post.title}
-          </h1>
-          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--foreground-muted)]">
-            <time dateTime={post.date} className="font-mono">
-              {formatDate(post.date)}
-            </time>
-            <Link
-              href="/blog/"
-              className="inline-flex items-center gap-1.5 text-[var(--foreground-soft)] transition-colors hover:text-[var(--accent)]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>返回文章</span>
-            </Link>
-          </div>
-        </header>
+  const headings = extractHeadings(post.content);
+  const { prev, next } = getAdjacentPosts(slug);
 
-        <div className="prose">
-          <MDXRemote source={post.content} />
+  return (
+    <>
+      <ReadingProgress />
+      <main className="container-page mx-auto py-24">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,42rem)_16rem]">
+          {/* 左侧：文章正文 */}
+          <article className="min-w-0 max-w-2xl">
+            <header className="mb-12">
+              <p className="text-sm uppercase tracking-widest text-[var(--foreground-muted)]">
+                {post.category}
+              </p>
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl">
+                {post.title}
+              </h1>
+              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--foreground-muted)]">
+                <time dateTime={post.date} className="font-mono">
+                  {formatDate(post.date)}
+                </time>
+                <Link
+                  href="/blog/"
+                  className="inline-flex items-center gap-1.5 text-[var(--foreground-soft)] transition-colors hover:text-[var(--accent)]"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span>返回文章</span>
+                </Link>
+              </div>
+            </header>
+
+            <div className="prose">
+              <MDXRemote
+                source={post.content}
+                options={{
+                  mdxOptions: {
+                    remarkPlugins: [remarkGfm],
+                    rehypePlugins: [
+                      rehypeSlug,
+                      [
+                        rehypePrettyCode,
+                        {
+                          theme: "github-dark-dimmed",
+                          keepBackground: false,
+                        },
+                      ],
+                    ],
+                  },
+                }}
+              />
+            </div>
+
+            {/* 上下篇导航 */}
+            {(prev || next) && (
+              <nav
+                aria-label="上下篇"
+                className="mt-16 grid grid-cols-1 gap-4 sm:grid-cols-2"
+              >
+                {prev ? (
+                  <AdjacentCard
+                    kind="prev"
+                    slug={prev.slug}
+                    title={prev.title}
+                    date={prev.date}
+                  />
+                ) : (
+                  <div aria-hidden className="hidden sm:block" />
+                )}
+                {next ? (
+                  <AdjacentCard
+                    kind="next"
+                    slug={next.slug}
+                    title={next.title}
+                    date={next.date}
+                  />
+                ) : null}
+              </nav>
+            )}
+          </article>
+
+          {/* 右侧：目录（桌面端） */}
+          <aside className="hidden lg:block">
+            <TableOfContents headings={headings} />
+          </aside>
         </div>
-      </article>
-    </main>
+      </main>
+    </>
+  );
+}
+
+function AdjacentCard({
+  kind,
+  slug,
+  title,
+  date,
+}: {
+  kind: "prev" | "next";
+  slug: string;
+  title: string;
+  date: string;
+}) {
+  const isPrev = kind === "prev";
+  return (
+    <Link
+      href={`/blog/${slug}/`}
+      className="card group flex flex-col gap-2 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+    >
+      <div
+        className={
+          "flex items-center gap-1.5 text-xs text-[var(--foreground-muted)]"
+        }
+      >
+        {isPrev ? (
+          <>
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>较新一篇</span>
+          </>
+        ) : (
+          <>
+            <span>较旧一篇</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </>
+        )}
+      </div>
+      <p className="text-sm font-medium leading-snug text-[var(--foreground)] transition-colors duration-300 group-hover:text-[var(--accent)]">
+        {title}
+      </p>
+      <time
+        dateTime={date}
+        className="font-mono text-xs text-[var(--foreground-muted)]"
+      >
+        {date}
+      </time>
+    </Link>
   );
 }

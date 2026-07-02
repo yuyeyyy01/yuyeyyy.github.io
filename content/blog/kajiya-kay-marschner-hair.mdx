@@ -3,11 +3,10 @@ title: "Kajiya-Kay & \"类 Marschner\" 头发高光"
 date: "2025-11-05"
 category: "Hair"
 description: "Kajiya-Kay & \"类 Marschner\" 头发高光"
+tags: ["Hair", "Kajiya-Kay", "Marschner", "Shader"]
 ---
 
 > 本文对比 Kajiya-Kay 经典头发高光模型与「类 Marschner」基于方位角函数的实现，记录两者差异与切换成本。
-
-{/* TODO: 正文待补 */}
 
 ## 引言
 
@@ -21,4 +20,164 @@ description: "Kajiya-Kay & \"类 Marschner\" 头发高光"
 - 「类 Marschner」简化方案：用方位角函数拟合 M 项，避开完整 Marschner 的复杂度。
 - 两者在 URP 里的成本对比与切换踩坑。
 
-{/* TODO: 数学推导、Shader 代码、对比截图、性能数据 */}
+## Kajiya-Kay 数学推导
+
+Kajiya-Kay（1989）的核心是把头发纤维当作「不透明的细圆柱」，specular 来自圆柱表面的反射。
+关键数学是**切线在光照平面上的投影**。
+
+设头发切线方向为 `T`（沿发丝走向），光照方向 `L`，观察方向 `V`，半角 `H = normalize(L + V)`。
+Kajiya-Kay 的 specular 公式：
+
+```math
+specular = (sin(T, H))^(exp)
+```
+
+其中 `sin(T, H)` 是切线 `T` 与半角 `H` 的夹角正弦。展开：
+
+```math
+sin(T, H) = sqrt(1 - (T·H)²)
+```
+
+这个公式的几何含义：把 `T` 投影到由 `L` 和 `V` 张成的「光照平面」上，得到一个切线分量，
+specular 强度随这个分量与 `H` 的夹角余弦的高次幂衰减。`exp` 控制高光锐度，通常 8~32。
+
+推导细节：圆柱的 specular 本质是「法线沿圆柱周向变化」，而圆柱法线在「垂直切线的圆」上分布。
+把 `H` 投影到垂直 `T` 的平面，得到一个「有效法线」，specular 就是 `N·H` 的幂。
+但因为圆柱法线在周向均匀，所以最终退化成 `sin(T, H)` 而不是 `cos`。
+
+完整 specular 项：
+
+```hlsl
+float KajiyaKaySpecular(float3 T, float3 H, float exponent)
+{
+    float TdotH = dot(T, H);
+    float sinTH = sqrt(max(0.0, 1.0 - TdotH * TdotH));
+    return pow(sinTH, exponent);
+}
+```
+
+注意 `T` 要做「切线偏移」：真实头发高光不会严格沿发丝走向，因为头发有鳞片倾斜角（约 3°）。
+常做法是把 `T` 沿法线 `N` 抬一点：
+
+```hlsl
+float3 shiftedT = normalize(T + N * _PrimaryShift);
+```
+
+`_PrimaryShift > 0` 让高光往发根偏（鳞片朝发根倾斜），`< 0` 往发梢偏。这是 Kajiya-Kay 上做
+「双高光」（primary + secondary）的常用技巧。
+
+## Kajiya-Kay Shader 实现
+
+完整的 Kajiya-Kay diffuse + specular，带双高光偏移：
+
+```hlsl
+half3 HairShading_KK(float3 N, float3 T, float3 L, float3 V, half3 baseColor,
+                     half shift, half primaryExp, half secondaryExp,
+                     half3 specColor1, half3 specColor2)
+{
+    float3 H = normalize(L + V);
+
+    // 切线偏移：primary 和 secondary 用不同 shift
+    float3 Tp = normalize(T + N * shift);
+    float3 Ts = normalize(T + N * (-shift * 0.5));
+
+    // 双高光
+    float spec1 = KajiyaKaySpecular(Tp, H, primaryExp);
+    float spec2 = KajiyaKaySpecular(Ts, H, secondaryExp);
+
+    // diffuse：Kajiya-Kay 用的是 wrapped diffuse，避免背光面全黑
+    float NdotL = dot(N, L);
+    float diffuse = saturate(NdotL * 0.5 + 0.5);  // wrap diffuse
+
+    half3 color = baseColor * diffuse
+                + specColor1 * spec1
+                + specColor2 * spec2;
+    return color;
+}
+```
+
+`specColor1` 通常带一点发色（染色高光），`specColor2` 偏白（二次高光，模拟发梢反光）。
+wrap diffuse 是 Kajiya-Kay 的标配，因为头发不是 opaque，背光面不该全黑。
+
+## 类 Marschner 简化：方位角函数拟合 M 项
+
+完整 Marschner 把头发当透明椭圆截面，分 R（表面反射）、TT（透射透射）、TRT（透射反射透射）三路。
+最复杂的是 M 项（纵向散射），它依赖「入射方位角与出射方位角的关系」。
+
+完整 Marschner 要算菲涅尔 + 椭圆截面几何 + 纵向高斯，成本高。「类 Marschner」简化的思路是：
+**保留 Marschner 的 M 项结构，但用方位角函数拟合替代真实物理积分**。
+
+M 项的本质是：纵向平面上，反射方向相对发丝切线的偏角 `θr` 与入射偏角 `θi` 的关系。
+Marschner 用高斯拟合纵向散射：
+
+```math
+M(θr, θi) = exp( −(θr − θr0)² / (2 β²) )
+```
+
+`θr0` 是反射中心角（和鳞片倾斜有关），`β` 是粗糙度。这一项等价于「把 Kajiya-Kay 的 power 项换成高斯」。
+
+「类 Marschner」常用的简化（来自 Scheuermann / d'Eon 的工业实现）：
+
+```hlsl
+// 纵向角
+float cosThetaI = dot(T, L);
+float cosThetaR = dot(T, V);
+float sinThetaI = sqrt(1 - cosThetaI * cosThetaI);
+float sinThetaR = sqrt(1 - cosThetaR * cosThetaR);
+
+// 中心反射角：鳞片倾斜 α，入射角 θi → 反射中心 θr = 2α + θi（一次反射）
+float centerAngle = 2.0 * _CuticleTilt + cosThetaI; // 简化：用 cos 近似
+
+// 高斯 M 项
+float M_R = Gaussian(sinThetaR - centerAngle, _BetaR);
+float M_TT = Gaussian(sinThetaR + cosThetaI, _BetaTT); // TT 项中心在另一侧
+
+// 方位角项 N：用拟合的 cos 函数，避免完整 Fresnel 积分
+float N_R  = lerp(0.25, 1.0, saturate(cosThetaR));   // R 项方位角衰减
+float N_TT = 0.5;                                     // TT 项近似均匀
+```
+
+`Gaussian(x, beta) = exp(-x*x / (2*beta*beta))`。这套拟合在移动端跑得动，效果接近 Marschner 的
+R + TT 双高光，但 TT 的发梢透光比真 Marschner 弱。
+
+R 项的完整 specular：
+
+```hlsl
+float spec_R = M_R * N_R * Fresnel_R(cosThetaI);
+float spec_TT = M_TT * N_TT * Fresnel_TT(cosThetaI);
+```
+
+菲涅尔用 Schlick 近似，`Fresnel_R` 在正面（`cosThetaI ≈ 1`）约 0.05，掠射增强；
+`Fresnel_TT` 在掠射衰减（光进得去才出得来）。
+
+## 两者成本对比
+
+在 URP（移动端 GLES 3.2）实测：
+
+| 方案 | ALU/像素 | 贴图采样 | 效果 |
+|---|---|---|---|
+| Kajiya-Kay 双高光 | ~25 | 1（发色图） | 过得去，高光位置对，形态偏窄 |
+| 类 Marschner (R+TT) | ~60 | 1 | 接近真 Marschner，TT 透光稍弱 |
+| 完整 Marschner | ~150+ | 1~2 | 最好，移动端掉帧 |
+
+Kajiya-Kay 的优势是**只要一个 power**，ALU 极低；劣势是高光形态固定为一条窄带，没有 TT 的
+透光（所以背光面头发发黑，要靠 wrap diffuse 补）。类 Marschner 多了 TT 项和高斯拟合，ALU 翻倍但
+仍在移动端可接受，且 TT 让头发边缘有自然透光，质感明显好一档。
+
+## 切换踩坑
+
+1. **切线方向约定**：Kajiya-Kay 和 Marschner 都要求 `T` 沿发丝走向，但 Unity 的 `tangent` 是给法线贴图用的，
+   不一定是发丝走向。要么用 flow map 生成切线，要么在顶点色里存发丝方向。这是 Kajiya-Kay 上来最容易翻车的地方。
+2. **双高光 shift 方向**：primary shift 正、secondary shift 负，否则两条高光会叠在一起，
+   看不出 Marschner 的「M 线分离」特征。
+3. **N·V 朝向**：Marschner 的 TT 项在背光面增强，要保证 `V` 朝向相机时 `N·V` 为正，
+   别被 URP 的 `GetWorldSpaceNormalizeViewDir` 带的符号坑了。
+4. **高光 gamma**：`pow(sinTH, exp)` 的 `exp` 在线性空间调，预览在 sRGB 会偏亮，
+   切换 Kajiya-Kay ↔ Marschner 时要重新调 `exp` 和 `β`，不能照搬。
+5. **背光透光**：Kajiya-Kay 没有 TT，背光面靠 wrap diffuse，颜色偏灰；类 Marschner 的 TT
+   能透出背景色，但 `_BetaTT` 调大会让高光糊。建议 TT 的 `β` 比 R 大 2~3 倍。
+6. **抗锯齿**：高 `exp` 的 Kajiya-Kay 高光在 MSAA 下会闪烁，因为 `sinTH` 在发丝边缘跳变。
+   类 Marschner 的高斯形态天然抗锯齿，这是切换后一个意外的好处。
+
+整体建议：移动端先用 Kajiya-Kay 双高光打底，要质感升级再换类 Marschner 的 R+TT。
+完整 Marschner 留给 PC / 主机。

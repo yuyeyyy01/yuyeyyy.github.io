@@ -3,11 +3,10 @@ title: "基于厚度图的皮肤 SSS：预积分 LUT 实战"
 date: "2025-11-15"
 category: "Skin / SSS"
 description: "基于厚度图的皮肤 SSS：预积分 LUT 实战"
+tags: ["SSS", "Skin", "LUT", "URP"]
 ---
 
 > 本文记录基于厚度图 + 预积分 LUT 实现皮肤次表面散射的实战过程，附 LUT 烘焙思路与 Shader 代码。
-
-{/* TODO: 正文待补 */}
 
 ## 引言
 
@@ -20,4 +19,139 @@ description: "基于厚度图的皮肤 SSS：预积分 LUT 实战"
 
 本文将整理 LUT 的烘焙公式、厚度图的几种生成方式，以及最终在 URP 里接管的几个细节。
 
-{/* TODO: LUT 烘焙脚本、厚度图烘焙、Shader 接入、对比截图 */}
+## 厚度图：法线 + 曲率近似
+
+真实 SSS 需要的是光在皮肤内的传播距离，等价于「光走过的物质厚度」。直接拿美术画的 thickness map
+不够精确，常见做法是从几何体法线和曲率反推。
+
+曲率（曲率半径的倒数 `1/r`）可以由法线变化率近似：相邻像素法线夹角越大，几何越凸，散射路径越短。
+一个离线烘焙思路（在 Houdini / Blender / Substance 里都行）：
+
+1. 烘一张世界空间法线图；
+2. 对法线图做 Sobel，得到法线变化率 `|dN/dx + dN/dy|`；
+3. 把变化率映射成曲率，再和「到背光面的几何厚度」（从 mesh 烘的 AO 反相）组合：
+   `thickness = (1 - curvature * scale) * thicknessAO`。
+
+曲率大（鼻尖、鼻翼、耳廓）对应薄而凸的区域，散射颜色偏红；曲率小（额头、脸颊）对应厚而平的区域，
+散射弱。Jimenez 的预积分 LUT 正是用「曲率」作为一维，把厚度隐式编码进去。
+
+## 预积分 LUT：Jimenez SIGGRAPH 2015 核心公式
+
+预积分的物理动机是把一个 BSSRDF 在「曲率 × N·L」二维上预先积分，存成一张 256×256 的 LUT。
+核心是 Penner 的漫反射近似 + 球面卷积。最终的 LUT 像素值公式（简化形式）：
+
+```math
+LUT(curvature, NdotL) = ∫ BSSRDF(x, curvature, NdotL) dx
+```
+
+实际烘焙时用离散卷积近似。Jimenez 给出的关键近似是把散射核（Gaussian / Diple）在球面上做卷积，
+得到一个只依赖曲率和 `N·L` 的二维查找表。烘焙伪代码：
+
+```python
+def bake_lut(size=256):
+    lut = np.zeros((size, size, 3))
+    for j, NdotL in enumerate(np.linspace(-1, 1, size)):     # y: N·L
+        for i, curv in enumerate(np.linspace(0, 1, size)):   # x: 曲率
+            # 散射核：r → 颜色偏移（红光散射远，蓝光散射近）
+            color = integrate_scatter_profile(curv, NdotL)
+            lut[size-1-j, i] = color
+    return lut
+```
+
+`integrate_scatter_profile` 里用 Gaussian 核拟合三通道（RGB 不同 σ），红通道 σ 最大。
+Jimenez 2015 的论文里直接给了拟合系数，实测拿论文里的 `ProfileSeparation` 表照抄就行。
+LUT 存成一张 `RGBA`（或 RGB）小图，通常是 `256×256`，sRGB 空间。
+
+值得注意的是 **曲率维度要覆盖到 0**，否则平面区域（额头）会查不到正确值。
+另一维 `N·L` 要覆盖 `[-1, 1]`，因为背光面也要有透光（耳朵红边就是这个）。
+
+## 运行时采样：URP Shader 查 LUT
+
+运行时只需要三步：算曲率、算 `N·L`、查 LUT、把结果作为漫反射颜色调制。
+
+曲率在 Shader 里没法直接拿（需要邻近像素法线），两个常用做法：
+
+1. **离线把曲率烘成贴图**（推荐），运行时采样；
+2. **运行时用 `ddx/dgy` 求法线变化率**，便宜但噪声大，移动端不建议。
+
+URP 里接管的片段：
+
+```hlsl
+TEXTURE2D(_SSSLUT);    SAMPLER(sampler_SSSLUT);
+TEXTURE2D(_CurvatureMap); SAMPLER(sampler_CurvatureMap);
+
+half3 EvaluateSSS(float3 N, float3 L, float2 uv)
+{
+    // 1. 曲率
+    half curvature = SAMPLE_TEXTURE2D(_CurvatureMap, sampler_CurvatureMap, uv).r;
+
+    // 2. N·L， remap 到 [0,1] 作为 LUT 的 v 坐标
+    half NdotL = dot(N, L);
+    half v = NdotL * 0.5 + 0.5;
+
+    // 3. 查 LUT
+    half2 lutUV = half2(curvature, v);
+    half3 scatter = SAMPLE_TEXTURE2D(_SSSLUT, sampler_SSSLUT, lutUV).rgb;
+
+    return scatter;
+}
+```
+
+## 完整 Shader 片段
+
+把 SSS 接进 Lit 的漫反射项，替换掉纯 Lambert：
+
+```hlsl
+half3 SkinDiffuse(float3 N, float3 L, float3 V, float2 uv, half3 albedo, half roughness)
+{
+    half NdotL = saturate(dot(N, L));
+    half NdotV = saturate(dot(N, V));
+
+    // 基础 Lambert
+    half3 lambert = albedo * NdotL;
+
+    // SSS 贡献：LUT 给的是「散射后的漫反射颜色」，直接替换 Lambert
+    half curvature = SAMPLE_TEXTURE2D(_CurvatureMap, sampler_CurvatureMap, uv).r;
+    half v = dot(N, L) * 0.5 + 0.5;          // 注意用未 saturate 的 N·L，保留背光透光
+    half3 sss = SAMPLE_TEXTURE2D(_SSSLUT, sampler_SSSLUT, half2(curvature, v)).rgb;
+
+    // 透光：背光面加一点红色透光（耳朵、鼻翼）
+    half backLight = saturate(-dot(N, L));
+    half3 transmission = sss * backLight * albedo * _TransmissionStrength;
+
+    // 漫反射用 sss 调制，高光保持 GGX 不变
+    half3 diffuse = sss * albedo * saturate(NdotL);
+
+    return diffuse + transmission;
+}
+```
+
+关键点：
+
+- `N·L` 进 LUT 时**不要 saturate**，否则背光面（`N·L < 0`）的透光信息全丢；
+- `sss` 既是颜色偏移也是强度，红通道天然偏强，蓝通道弱；
+- 透光项 `transmission` 单独加，模拟边缘光穿过皮肤的红边。
+
+## 对比与踩坑
+
+**对比**：
+
+- 纯 Lambert：脸平，没有透光，鼻翼阴影硬；
+- 纯 BSSRDF（dipole 实时）：质量最好，但移动端跑不动，需要多 pass blur；
+- 预积分 LUT：一张 256×256 贴图 + 一次采样，移动端友好，效果接近离线 SSS。
+
+**踩坑**：
+
+1. **LUT 烘焙空间**：LUT 必须在**线性空间**烘焙，否则查出来发灰；采样时 Shader 要在线性空间用。
+2. **曲率范围**：曲率贴图的值域要对齐 LUT 的 x 轴。我用的是 `[0, 1]`，曲率 0 是平面，1 是最凸。
+   如果美术烘的曲率图值域是 `[0, 0.1]`，采样前要 `* 10` 归一化。
+3. **N·L 不要 saturate**：上面强调过，背光面是 SSS 最出彩的地方，saturate 会让耳朵红边消失。
+4. **和 SH/AO 冲突**：URP 的 `GlobalIllumination` 会再乘一次 AO，SSS 的透光会被 AO 抠掉。
+   建议把 SSS 放在 `AO 之后`、`IBL 之前`，或者对透光项乘 `(1 - AO)` 反向补偿。
+5. **金属流清零**：皮肤 `metallic = 0`，但如果你的 shader 是通用 Lit，别忘了 SSS 只在
+   `metallic < 0.01` 时启用，否则金属表面会出现奇怪的红色散射。
+6. **LUT 精度**：256 足够，128 会有可见 banding，尤其鼻尖高曲率区。LUT 用 BC7 压缩即可，
+   不要用 DXT5，红色通道 banding 明显。
+
+整体方案在移动端跑得动，效果对得起成本。要再进一步就是 separable SSS（双 pass blur）或
+burley normalized SSS，但那已经需要 MRT + 多 pass，不在本文范围。
