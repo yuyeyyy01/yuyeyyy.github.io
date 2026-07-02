@@ -64,7 +64,9 @@
 
 /* ---------- 基础重置 ---------- */
 html {
-  scroll-behavior: smooth;
+  /* 关闭全局平滑滚动：它会让滚轮滚到顶/底时带缓冲动画，产生"页顶被带动"的错觉。
+     锚点跳转的平滑改由 JS 程序化处理（scrollTo + behavior:'smooth'），不影响手动滚动。 */
+  scroll-behavior: auto;
 }
 
 body {
@@ -79,6 +81,8 @@ body {
   position: relative;
   min-height: 100vh;
   overflow-x: hidden;
+  /* 阻止滚到顶/底时的橡皮筋回弹，页面边界保持固定 */
+  overscroll-behavior-y: none;
 }
 
 /* 环境背景层：顶部蓝光晕 + 底部紫光晕，呼应"光谱/渲染"主题。
@@ -148,8 +152,14 @@ body::after {
   }
 }
 
-/* 主题切换时整个页面柔和过渡 */
-* {
+/* 主题切换时整页柔和过渡 —— 只挂在 body + 主要颜色容器上，
+   不再用全局 *：全局 * 会让滚动时背景/边框色的像素变化也带 0.3s 过渡，
+   滚到顶/底停下后色彩仍在追赶，产生"页顶被带一下"的残余缓冲感。 */
+body,
+.glass,
+.card,
+.btn-primary,
+.btn-secondary {
   transition: background-color 0.3s ease, border-color 0.3s ease,
     color 0.3s ease;
 }
@@ -324,5 +334,21 @@ code {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---------- Hero 滚动提示：小箭头缓慢上下浮动 ---------- */
+.hero-scroll-cue {
+  animation: hero-cue-float 2.4s ease-in-out infinite;
+}
+@keyframes hero-cue-float {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
   }
 }

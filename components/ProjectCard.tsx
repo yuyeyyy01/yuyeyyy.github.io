@@ -2,8 +2,8 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { fadeUp, whileInViewConfig } from "@/lib/motion";
+import { motion, type Variants } from "framer-motion";
+import { fadeUp, staggerItem, whileInViewConfig } from "@/lib/motion";
 import { ArrowUpRight } from "lucide-react";
 
 export interface ProjectCardProps {
@@ -15,27 +15,34 @@ export interface ProjectCardProps {
   icon?: ReactNode;
   /** 可选跳转链接：以 http 开头视为外链（新窗口打开），否则走 next/link（自动 basePath） */
   href?: string;
+  /** 入场动效变体：默认独立 fadeUp；传 staggerItem 时继承父容器错落入场 */
+  entryVariant?: Variants;
 }
 
 /**
  * 苹果风项目卡片。
  * 若提供 href，整卡由 Link / <a> 包裹可点击跳转。
  * hover 时柔和上移 + 阴影 + 加深边框，右下角浮现「访问 ↗」指示。
- * 滚动进入视口时淡入上移（whileInView，只触发一次）。
+ * 滚动进入视口时淡入上移（whileInView，只触发一次）；
+ * 若 entryVariant 传入 staggerItem，则改为继承父 motion 容器错落入场。
  */
 export default function ProjectCard({
   title,
   description,
   icon,
   href,
+  entryVariant = fadeUp,
 }: ProjectCardProps) {
   const isExternal = href?.startsWith("http");
 
+  const entryProps =
+    entryVariant === staggerItem
+      ? { variants: entryVariant }
+      : { variants: entryVariant, ...whileInViewConfig, viewport: { once: true, margin: "-60px" } };
+
   const content = (
     <motion.article
-      variants={fadeUp}
-      {...whileInViewConfig}
-      viewport={{ once: true, margin: "-60px" }}
+      {...entryProps}
       className="card group relative h-full p-6 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
     >
       {/* 图标区：48x48 圆角方块，hover 时柔和缩放 */}
