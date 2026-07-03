@@ -10,5 +10,8 @@ NEXT_PUBLIC_BASE_PATH=
 # 站点根 URL（SEO/RSS/OG 用）
 NEXT_PUBLIC_SITE_URL=https://你的域名.pages.dev
 
-# Cloudflare Pages Deploy Hook URL（PR4 自动重建用，先留空）
-DEPLOY_HOOK_URL=
+# 自动重建用：后台保存文章后触发 GitHub Actions 重建部署
+# GITHUB_TOKEN：GitHub PAT（repo 权限），Functions 调 repository_dispatch API 用
+# GITHUB_REPO：目标仓库全名（可省，默认 yuyeyyy01/yuyeyyy.github.io）
+GITHUB_TOKEN=
+GITHUB_REPO=yuyeyyy01/yuyeyyy.github.io

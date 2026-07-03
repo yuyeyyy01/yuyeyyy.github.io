@@ -15,8 +15,10 @@ export interface CloudflareEnv {
   ADMIN_TOKEN: string;
   /** 站点 basePath，根路径部署留空 */
   NEXT_PUBLIC_BASE_PATH?: string;
-  /** Cloudflare Pages Deploy Hook URL（PR4 自动重建用） */
-  DEPLOY_HOOK_URL?: string;
+  /** GitHub PAT（触发 repository_dispatch 自动重建用，需 repo 权限） */
+  GITHUB_TOKEN?: string;
+  /** 触发目标仓库全名，如 "yuyeyyy01/yuyeyyy.github.io" */
+  GITHUB_REPO?: string;
 }
 
 /** Pages Functions 标准上下文类型 */
@@ -121,20 +123,40 @@ export async function signAdminCookie(
 }
 
 /**
- * 触发 Cloudflare Pages 重建部署（PR4 自动重建）。
- * env.DEPLOY_HOOK_URL 未配置时静默跳过、返回 false，
- * 方便本地开发或未配 hook 时写操作不报错。
+ * 触发 GitHub Actions 重建部署（后台保存文章后自动上线）。
+ *
+ * 实现方式：调 GitHub repository_dispatch API，触发仓库的 workflow
+ *（on: repository_dispatch），由 Actions 跑 cf:deploy 等价命令重新构建并
+ * `wrangler pages deploy` 上传产物到 Cloudflare Pages。
+ *
+ * 之所以不走 Cloudflare Deploy Hook：本项目用 `wrangler pages deploy`
+ * 直接传静态产物（非 GitHub 集成构建），Deploy Hook 对此无效，
+ * Cloudflare 新 UI 也已不展示 Deploy hooks 入口。
+ *
+ * env.GITHUB_TOKEN / GITHUB_REPO 未配置时静默跳过、返回 false，
+ * 方便本地开发或未配 token 时写操作不报错。
  * 用 ctx.waitUntil 包裹以保证请求结束后 fetch 仍能完成。
  */
 export async function triggerDeploy(
   env: CloudflareEnv,
   waitUntil?: (p: Promise<unknown>) => void,
 ): Promise<boolean> {
-  if (!env.DEPLOY_HOOK_URL) return false;
-  const p = fetch(env.DEPLOY_HOOK_URL, { method: "POST" }).then(
-    () => true,
-    () => false,
-  );
+  if (!env.GITHUB_TOKEN) return false;
+  const repo = env.GITHUB_REPO || "yuyeyyy01/yuyeyyy.github.io";
+  const p = fetch(`https://api.github.com/repos/${repo}/dispatches`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      accept: "application/vnd.github+json",
+      "user-agent": "yuyepage-admin",
+    },
+    body: JSON.stringify({
+      "event_type": "rebuild",
+      "client_payload": { source: "admin-save" },
+    }),
+  })
+    .then((r) => r.ok)
+    .catch(() => false);
   // 有 waitUntil（Pages Functions 上下文）时挂到生命周期，避免请求结束就取消
   if (waitUntil) waitUntil(p);
   return p;
