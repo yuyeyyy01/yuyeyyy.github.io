@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { BASE_PATH } from "@/lib/site";
 import PostAdmin from "./posts";
 
@@ -20,6 +21,14 @@ function api(path: string): string {
 type Tab = "comments" | "posts";
 
 export default function AdminPage() {
+  return (
+    <Suspense fallback={<div className="container-page py-20 text-sm text-[var(--foreground-muted)]">加载…</div>}>
+      <AdminInner />
+    </Suspense>
+  );
+}
+
+function AdminInner() {
   const [authed, setAuthed] = useState(false);
   const [checking, setChecking] = useState(true);
 
@@ -27,7 +36,9 @@ export default function AdminPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [tab, setTab] = useState<Tab>("comments");
+  const searchParams = useSearchParams();
+  const initialTab: Tab = searchParams.get("tab") === "posts" ? "posts" : "comments";
+  const [tab, setTab] = useState<Tab>(initialTab);
 
   // 加载时探测 cookie 登录态
   useEffect(() => {

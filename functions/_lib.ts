@@ -17,6 +17,8 @@ export interface CloudflareEnv {
   NEXT_PUBLIC_BASE_PATH?: string;
   /** Cloudflare Pages Deploy Hook URL（PR4 自动重建用） */
   DEPLOY_HOOK_URL?: string;
+  /** R2 binding（图片上传，wrangler.toml 配置；未配置时 upload 接口返回 503） */
+  R2_BUCKET?: R2Bucket;
 }
 
 /** Pages Functions 标准上下文类型 */
