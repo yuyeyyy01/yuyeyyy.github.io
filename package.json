@@ -8,7 +8,12 @@
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write .",
-    "index": "pagefind --site out"
+    "index": "pagefind --site out",
+    "cf:dev": "wrangler pages dev",
+    "cf:deploy": "npm run build && npm run index && wrangler pages deploy out",
+    "db:init": "wrangler d1 execute yuyepage-db --file=migrations/0001_init.sql",
+    "db:local": "wrangler d1 execute yuyepage-db --local --file=migrations/0001_init.sql",
+    "db:query": "wrangler d1 execute yuyepage-db --command"
   },
   "dependencies": {
     "@giscus/react": "^3.1.0",
@@ -48,6 +53,7 @@
     "postcss": "^8.4.49",
     "prettier": "^3",
     "tailwindcss": "^4.0.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "wrangler": "^4.107.0"
   }
 }
