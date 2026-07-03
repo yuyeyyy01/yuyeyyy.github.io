@@ -2,7 +2,7 @@
 
 ## 1. 概述
 
-阶段 B 把站点从 GitHub Pages 子路径静态导出迁移到 Cloudflare Pages，新增 D1 数据库存储文章与评论、Pages Functions 提供 API、在线管理后台（口令登录）支持文章 CRUD 与评论审核，并通过 Deploy Hook 在保存后自动触发重建。
+阶段 B 把站点从 GitHub Pages 子路径静态导出迁移到 Cloudflare Pages，新增 D1 数据库存储文章与评论、Pages Functions 提供 API、在线管理后台（口令登录）支持文章 CRUD 与评论审核。博客页用 **Edge SSR** 从 D1 动态渲染，后台保存后前台立即生效（约 1 分钟 CDN 刷新），**不需重建部署**。
 
 PR 进度：
 
@@ -11,34 +11,37 @@ PR 进度：
 | PR1 | 基础设施（D1 / wrangler / 环境变量解耦） | 已合并 |
 | PR2 | 评论接口 + 评论审核 UI          | 已合并 |
 | PR3 | 写作后台（文章 CRUD UI + API）  | 已合并 |
-| PR4 | 自动重建（Deploy Hook）+ 迁移收尾 | 进行中 |
+| PR4 | Edge SSR 替代重建方案 + 迁移收尾 | 进行中 |
 
 ## 2. 整体架构
 
-静态导出 + 构建时 MDX 渲染 + D1 存储 + Pages Functions + Deploy Hook 重建。
+静态导出（非博客页）+ 博客页 Edge SSR + D1 存储 + Pages Functions API。
 
-- 静态导出：`next build` 产出 `out/`，由 `wrangler pages deploy out` 部署到 Cloudflare Pages。
-- 构建时 MDX 渲染：构建前用 `scripts/export-d1-posts.mjs` 把 D1 `posts` 表导出为 `content/blog/<slug>.mdx`，再由 `lib/posts.ts` 读取、`next-mdx-remote` 渲染成静态 HTML。D1 为唯一数据源，MDX 文件是构建产物（加 `.gitignore`，不进 git）。
-- D1 存储：文章正文（`content_md`）与评论都存 D1，通过 `yuyepage_db` binding 访问。
-- Pages Functions：`functions/` 目录提供 `/api/comments` 与 `/api/admin/*` 接口，运行在 Cloudflare 边缘。
-- Deploy Hook 重建（PR4）：后台写操作保存到 D1 后调用 `triggerDeploy`，POST 到 `DEPLOY_HOOK_URL` 触发 Pages 重建，重建流程执行 `export-d1-posts → next build → pagefind → deploy`。
+- 静态导出：`next build` 产出 `out/`，由 `wrangler pages deploy out` 部署到 Cloudflare Pages。首页 / `/about` / `/search` / `/admin` 等非博客页走静态导出。
+- 博客页 Edge SSR：`functions/blog/[[path]].ts` catch-all 路由在 Cloudflare Pages Functions（Edge）运行时从 D1 读文章，用 `marked` 把 markdown 渲染成 HTML 拼装完整页面返回。后台保存到 D1 后前台**立即生效**，最多 1 分钟 CDN 刷新，不需任何重建/部署。
+- D1 存储：文章正文（`content_md`）与评论都存 D1，通过 `yuyepage_db` binding 访问。D1 是唯一数据源。
+- Pages Functions：`functions/` 目录提供 `/api/comments`、`/api/admin/*` 接口与 `/blog/*` SSR，运行在 Cloudflare 边缘。
+- 重建方案已废弃：原 PR4 的 `triggerDeploy` / `DEPLOY_HOOK_URL` / GitHub Actions `repository_dispatch` 重建触发均已删除（详见第 5 节）。
 
 ```
 ┌──────────────┐      ┌──────────────────────────────┐
 │ 读者浏览器    │      │ 管理员浏览器 /admin           │
-│ 静态页 + 评论 │      │ 口令登录（x-admin-token）     │
+│ 静态页 + 评论 │      │ 口令登录（cookie）            │
+│ /blog/* SSR  │      │                              │
 └──────┬───────┘      └──────────────┬───────────────┘
-       │ GET 静态页                   │ /api/admin/*
-       │ POST /api/comments           │
-       ▼                              ▼
+       │ GET 静态页 / /blog/* SSR    │ /api/admin/*
+       │ POST /api/comments          │
+       ▼                             ▼
 ┌─────────────────────────────────────────────────────┐
 │                  Cloudflare Pages                   │
 │  ┌───────────────┐   ┌────────────────────────────┐ │
 │  │ 静态资源 out/  │   │ Pages Functions functions/ │ │
 │  │ HTML/JS/CSS   │   │  /api/comments             │ │
 │  │ pagefind 索引  │   │  /api/admin/comments       │ │
-│  └───────────────┘   │  /api/admin/posts[/:slug]  │ │
-│                      └─────────────┬──────────────┘ │
+│  └──────┬────────┘   │  /api/admin/posts[/:slug]  │ │
+│         │            │  /blog/[[path]] (SSR)      │ │
+│  ASSETS binding──────▶│                            │ │
+│  (取静态页 <head> CSS) └─────────────┬──────────────┘ │
 │                                    │                │
 │                      ┌─────────────▼──────────────┐ │
 │                      │  D1: yuyepage_db           │ │
@@ -46,15 +49,16 @@ PR 进度：
 │                      │  comment_rate              │ │
 │                      └──────────────────────────┘ │
 └─────────────────────────────────────────────────────┘
-       ▲
-       │ POST DEPLOY_HOOK_URL（PR4）
-       │
-┌──────┴─────────────────────────────────────────────┐
-│  重建流程（Deploy Hook 触发）                        │
-│  export-d1-posts 生成 mdx → next build → pagefind   │
-│  → wrangler pages deploy out → 约 1–2 分钟生效       │
-└────────────────────────────────────────────────────┘
 ```
+
+**博客 SSR 实现**（`functions/blog/[[path]].ts`）：
+
+- `/blog/` → 文章列表：从 D1 查 `published=1` 文章，渲染卡片 + 标签筛选 UI。
+- `/blog/<slug>/` → 文章详情：`marked` 把 `content_md` 渲染成 HTML，含评论区内联 JS、目录 TOC 内联 JS。
+- HTML 壳：`env.ASSETS.fetch("/about/")` 拉现有静态页，提取 `<head>` 里的 CSS，保证样式一致。
+- MDX 自定义组件预处理：`<Video bilibili=...>` / `<Video youtube=...>` → iframe；`<Scene>` / `<ShaderDemo>` → 占位卡片；`<Figure>` → `<img>`。
+- cache-control：`max-age=60, s-maxage=60`（1 分钟 CDN 刷新，后台保存后最多 1 分钟生效）。
+- 依赖：`marked ^18.0.5`。
 
 ## 3. 数据模型
 
@@ -71,7 +75,7 @@ PR 进度：
 | description   | TEXT    | NOT NULL DEFAULT ''             | 摘要                          |
 | tags          | TEXT    | NOT NULL DEFAULT '[]'           | JSON 数组字符串               |
 | content_md    | TEXT    | NOT NULL DEFAULT ''             | MDX 原文                      |
-| content_html  | TEXT    | NOT NULL DEFAULT ''             | 预渲染 HTML（构建/保存时生成）|
+| content_html  | TEXT    | NOT NULL DEFAULT ''             | 预渲染 HTML（当前未使用，SSR 实时渲染）|
 | updated_at    | TEXT    | NOT NULL DEFAULT datetime('now')| 更新时间                      |
 | published     | INTEGER | NOT NULL DEFAULT 1              | 0 草稿 / 1 已发布             |
 
@@ -130,28 +134,19 @@ PR 进度：
 POST /api/admin/posts  或  PUT /api/admin/posts/:slug
    │  写入 D1 posts 表（content_md 原文）
    ▼
-triggerDeploy（PR4，待接入）
-   │  fetch(DEPLOY_HOOK_URL, { method: "POST" })
-   │  ctx.waitUntil 包裹，请求结束仍完成
+Edge SSR 直接读 D1 渲染（functions/blog/[[path]].ts）
+   │  读者下次访问 /blog/<slug>/ 时从 D1 取最新内容
+   │  marked 渲染 → 拼装 HTML → 返回
    ▼
-Cloudflare Pages 重建
-   │  执行 cf:deploy 流程：
-   │    1. node scripts/export-d1-posts.mjs
-   │       → wrangler d1 execute 查 published=1 文章
-   │       → 写 content/blog/<slug>.mdx（带 frontmatter）
-   │    2. next build（lib/posts.ts 读 mdx → next-mdx-remote 渲染）
-   │    3. pagefind --site out（生成搜索索引）
-   │    4. wrangler pages deploy out
-   ▼
-读者访问新内容（约 1–2 分钟延迟）
+读者访问新内容（最多 1 分钟 CDN 刷新后生效）
 ```
 
 说明：
 
-- D1 是唯一数据源。`content/blog/*.mdx` 是每次构建重新生成的产物，已加 `.gitignore`，不进 git。
-- `export-d1-posts.mjs` 只导出 `published = 1` 的文章；草稿不参与构建。
-- PR4 已接入 `triggerDeploy`：写操作保存到 D1 后，若影响前台（已发布文章内容变 / 草稿→发布 / 删除已发布），自动 POST 到 `DEPLOY_HOOK_URL` 触发重建；草稿修改不触发。UI 提示「已保存，已触发重建（约 1-2 分钟后上线）」或「已保存（草稿，未触发重建）」。
-- `triggerDeploy` 在 `DEPLOY_HOOK_URL` 未配置时静默跳过，方便本地开发。
+- D1 是唯一数据源。文章后台保存到 D1 后，`/blog/*` 走 Edge SSR 直接读 D1 渲染，**不需任何重建/部署**，最多 1 分钟 CDN 刷新后前台生效。
+- `content/blog/*.mdx` 仍可由 `export-d1-posts.mjs` 导出，仅用于本地预览 / 非博客页的静态构建 fallback，已加 `.gitignore`，不进 git。
+- 重建方案已废弃：原 PR4 的 `triggerDeploy` / `DEPLOY_HOOK_URL` / GitHub Actions `repository_dispatch` 重建触发均已删除。原因：Cloudflare 新 UI 不展示 Deploy hooks 入口；本项目用 `wrangler pages deploy` 直传产物（非 GitHub 集成构建），Deploy Hook 无效；GitHub Actions 方案需仓库 owner 加 Secrets，用户只是协作者无 admin 权限。改用 Edge SSR 彻底绕开"重建部署"需求。
+- UI 提示改为「已保存」（不再有"已触发重建"措辞）。
 
 ## 6. 部署流程
 
@@ -172,10 +167,12 @@ Cloudflare Pages 重建
 
 `cf:deploy` 顺序：
 
-1. `export-d1-posts.mjs`：`wrangler d1 execute` 查 `posts WHERE published=1` → 写 `content/blog/<slug>.mdx`，并维护 `.d1-export.json` 清单。
-2. `next build`：`lib/posts.ts` 读 mdx → 静态导出到 `out/`。
+1. `export-d1-posts.mjs`：`wrangler d1 execute` 查 `posts WHERE published=1` → 写 `content/blog/<slug>.mdx`，并维护 `.d1-export.json` 清单。**仅用于本地预览 / 非博客页 fallback**，博客前台已不走这里。
+2. `next build`：`lib/posts.ts` 读 mdx → 静态导出到 `out/`（首页 / `/about` / `/search` / `/admin` 等非博客页）。博客页 `/blog/*` 不走静态导出，由 `functions/blog/[[path]].ts` SSR 承载。
 3. `pagefind --site out`：生成静态搜索索引。
 4. `wrangler pages deploy out`：上传到 Cloudflare Pages。
+
+> 文章后台保存到 D1 后，`/blog/*` 走 Edge SSR 直接读 D1，**不需要跑 `cf:deploy`**。只有改了非博客页代码（首页布局、关于页等）时才需手动跑 `cf:deploy:root`。
 
 D1 脚本说明：
 
@@ -194,7 +191,7 @@ D1 脚本说明：
 | 变量                     | 用途                                       | 本地（.dev.vars）        | Cloudflare Dashboard    |
 | ------------------------ | ------------------------------------------ | ------------------------ | ----------------------- |
 | `ADMIN_TOKEN`            | 管理后台口令，`isAdmin` 比对                | 自设任意串               | 自设强随机串            |
-| `DEPLOY_HOOK_URL`        | Pages Deploy Hook URL，PR4 自动重建        | 可不配（triggerDeploy 跳过）| Pages 项目 → Settings → Builds → Deploy hook |
+| `ASSETS`                 | Pages 静态资源 binding，SSR 取静态页 CSS 用 | 自动注入，无需配         | 自动注入，无需配        |
 | `NEXT_PUBLIC_BASE_PATH`  | Next.js basePath，根路径部署留空串         | `/yuyeyyy.github.io` 或不设 | `""`（根路径）        |
 | `NEXT_PUBLIC_SITE_URL`   | 站点根 URL（含 basePath），SEO/RSS/OG 用   | `https://yuyeyyy01.github.io/yuyeyyy.github.io` | `https://你的域名` |
 
@@ -233,7 +230,6 @@ npm run cf:dev
 
 ```
 ADMIN_TOKEN=local-dev-token
-DEPLOY_HOOK_URL=
 NEXT_PUBLIC_BASE_PATH=/yuyeyyy.github.io
 NEXT_PUBLIC_SITE_URL=http://localhost:8788/yuyeyyy.github.io
 ```
@@ -261,7 +257,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:8788/yuyeyyy.github.io
 - 新建：「新建」按钮 → 填 slug（仅新建可改，须 `^[a-z0-9-]+$`）、日期、标题、分类、标签（逗号分隔）、摘要、正文（MDX 源码）、已发布勾选 → 保存（`POST /api/admin/posts`）。
 - 编辑：点列表项 → `GET /api/admin/posts/:slug` 取详情 → 改字段 → 保存（`PUT /api/admin/posts/:slug`，动态拼 update）。
 - 删除：编辑页「删除」按钮，二次确认后 `DELETE /api/admin/posts/:slug`。
-- 保存/删除后提示：触发重建则显示「已保存，已触发重建（约 1-2 分钟后上线）」，草稿则「已保存（草稿，未触发重建）」。
+- 保存/删除后提示「已保存」（博客走 SSR，保存即生效，约 1 分钟 CDN 刷新后前台可见）。
 
 ## 10. 根路径迁移步骤
 
@@ -271,25 +267,25 @@ NEXT_PUBLIC_SITE_URL=http://localhost:8788/yuyeyyy.github.io
 
 - `lib/site.ts`：`BASE_PATH` 优先读 `NEXT_PUBLIC_BASE_PATH`，未设回退 `/yuyeyyy.github.io`；`SITE_URL` 同理。
 - `package.json` 新增 `cf:deploy:root` 脚本：显式注入 `NEXT_PUBLIC_BASE_PATH=""` + `NEXT_PUBLIC_SITE_URL=https://yuyepage.pages.dev` 一键根路径部署。
-- `.github/workflows/deploy.yml`（GitHub Pages workflow）**已删除**，全站切到 Cloudflare Pages。
+- `.github/workflows/deploy.yml`（原 GitHub Pages workflow，后曾用于 `repository_dispatch` 触发重建）**已删除**，全站切到 Cloudflare Pages，博客走 SSR 不需重建。
 
 正式切换清单：
 
 - [ ] 在 Cloudflare Pages Dashboard 创建项目 `yuyepage`，绑定 `yuyepage_db` D1（`wrangler.toml` 已配）。
-- [ ] Dashboard 环境变量设 `NEXT_PUBLIC_BASE_PATH=""`、`NEXT_PUBLIC_SITE_URL=https://yuyepage.pages.dev`、`ADMIN_TOKEN=<强口令>`、`DEPLOY_HOOK_URL=<Pages Deploy Hook>`。
+- [ ] Dashboard 环境变量设 `NEXT_PUBLIC_BASE_PATH=""`、`NEXT_PUBLIC_SITE_URL=https://yuyepage.pages.dev`、`ADMIN_TOKEN=<强口令>`。（无需 `DEPLOY_HOOK_URL`，博客走 SSR。）
 - [ ] 首次 `npm run cf:deploy:root`（或 `cf:deploy`，依赖 dashboard 环境变量）部署到 `yuyepage.pages.dev`。
-- [ ] 验证站点 + `/admin` + `/api/comments` 正常。
-- [ ] 在 Pages 项目设置里创建 Deploy Hook，把 URL 填回 `DEPLOY_HOOK_URL` 环境变量，验证"后台保存 → 自动重建"闭环。
+- [ ] 验证站点 + `/admin` + `/api/comments` + `/blog/*` SSR 正常。
+- [ ] 验证"后台保存文章 → 1 分钟后前台可见"SSR 闭环（无需任何部署/重建）。
 - [ ] （可选）`lib/site.ts` 回退默认值改为根路径，彻底告别子路径。
 - [ ] GitHub Pages 旧地址 `yuyeyyy01.github.io/yuyeyyy.github.io` 的保留/301 决策。
 
 ## 11. 待办与后续
 
-- [x] **PR4 自动重建接入**：`posts.ts`（POST）与 `[slug].ts`（PUT/DELETE）写操作成功后已调用 `triggerDeploy(env, ctx.waitUntil)`；草稿不触发，草稿→发布触发，已发布改内容触发，删除已发布触发。评论接口暂不触发重建（评论是运行时 API，不需重建）。
+- [x] **PR4 重建方案废弃，改为 Edge SSR**：原 `triggerDeploy` / `DEPLOY_HOOK_URL` / GitHub Actions `repository_dispatch` 重建触发方案已废弃。改用 `functions/blog/[[path]].ts` Edge SSR 从 D1 动态渲染，后台保存即生效（约 1 分钟 CDN 刷新），不需任何重建/部署/Secret/owner 配置。
 - [ ] **图片上传**：已移除（用户主动放弃，走外链）。git 历史保留 R2 版与 GitHub API 版实现，详见第 12 节。
 - [ ] **正式根路径迁移**：见第 10 节（pages.dev 方案，代码已就绪，待首次部署）。
-- [x] **删除 GitHub Pages workflow**：`.github/workflows/deploy.yml` 已删，避免双发布。
-- [ ] `content_html` 字段当前未使用，评估是否在保存时预渲染 HTML 或移除该列。
+- [x] **删除 `.github/workflows/deploy.yml`**：该文件原为 GitHub Pages workflow，后曾用于 `repository_dispatch` 触发重建。新架构下博客走 SSR 不需重建，且用户非仓库 owner 无法加 Secrets，故删除。避免双发布。
+- [ ] `content_html` 字段当前未使用（SSR 用 `marked` 实时渲染 `content_md`），评估是否移除该列或改作缓存。
 - [ ] 评论 admin 接口路径：文件头注释写的是子路径 `/approve`、`/delete`，实际实现是 `?action=` query param，二者已不一致，后续可统一。
 - [ ] `functions/` 目录的 `tsc` 类型检查有既存报错（`PagesFunction<EnvContext["env"]>` 泛型对 env 解析不准），不影响 esbuild 部署与 `next build`，后续可单独修。
 

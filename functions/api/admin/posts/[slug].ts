@@ -5,7 +5,7 @@
  * PUT    /api/admin/posts/:slug   → 保存修改
  * DELETE /api/admin/posts/:slug   → 删除
  */
-import { type EnvContext, json, corsPreflight, isAdmin, triggerDeploy } from "../../../_lib";
+import { type EnvContext, json, corsPreflight, isAdmin } from "../../../_lib";
 
 interface PostRow {
   slug: string;
@@ -101,16 +101,7 @@ export const onRequestPut: PagesFunction<EnvContext["env"]> = async (ctx) => {
     .bind(...values)
     .run();
 
-  // 触发重建的条件：更新后处于已发布状态，且确实改了内容/frontmatter
-  // （草稿修改不触发；草稿→发布会触发；已发布改内容会触发）
-  const willPublish = (data.published ?? before.published) === 1;
-  const changedContent = fields.some((f) => f !== "updated_at = datetime('now')");
-  const rebuild = willPublish && changedContent;
-  if (rebuild) {
-    await triggerDeploy(ctx.env, (p) => ctx.waitUntil(p));
-  }
-
-  return json({ ok: true, rebuild });
+  return json({ ok: true });
 };
 
 export const onRequestDelete: PagesFunction<EnvContext["env"]> = async (ctx) => {
@@ -129,9 +120,5 @@ export const onRequestDelete: PagesFunction<EnvContext["env"]> = async (ctx) => 
 
   await db.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
 
-  // 删除已发布文章后触发重建，让前台列表更新
-  if (row.published === 1) {
-    await triggerDeploy(ctx.env, (p) => ctx.waitUntil(p));
-  }
-  return json({ ok: true, rebuild: row.published === 1 });
+  return json({ ok: true });
 };

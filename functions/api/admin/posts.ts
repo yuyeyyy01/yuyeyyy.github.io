@@ -4,7 +4,7 @@
  * GET   /api/admin/posts            → 列文章（slug, title, date, category, published）
  * POST  /api/admin/posts            → 新建文章 { slug, title, date, category, description, tags, content_md }
  */
-import { type EnvContext, json, corsPreflight, isAdmin, triggerDeploy } from "../../_lib";
+import { type EnvContext, json, corsPreflight, isAdmin } from "../../_lib";
 
 interface PostRow {
   slug: string;
@@ -82,10 +82,5 @@ export const onRequestPost: PagesFunction<EnvContext["env"]> = async (ctx) => {
     )
     .run();
 
-  // 新建已发布文章时触发重建；草稿不触发，避免无谓构建
-  if ((data.published ?? 1) === 1) {
-    await triggerDeploy(ctx.env, (p) => ctx.waitUntil(p));
-  }
-
-  return json({ ok: true, slug, rebuild: (data.published ?? 1) === 1 }, 201);
+  return json({ ok: true, slug }, 201);
 };
