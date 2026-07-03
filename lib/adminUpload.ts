@@ -26,7 +26,7 @@ export async function uploadImage(
     });
     const d = (await res.json()) as { ok?: boolean; url?: string; error?: string };
     if (res.ok && d.ok && d.url) {
-      // 后端返回相对路径 /uploads/<key>，前端按 BASE_PATH 拼接（根路径部署时为空）
+      // 后端返回相对路径 /images/<date>/<file>，前端按 BASE_PATH 拼接（根路径部署时为空）
       const url = d.url.startsWith("/") ? `${BASE_PATH}${d.url}` : d.url;
       return { url };
     }
