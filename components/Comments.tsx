@@ -1,48 +1,105 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTheme } from "next-themes";
-import Giscus from "@giscus/react";
+import { BASE_PATH } from "@/lib/site";
+import { cn } from "@/lib/utils";
 
 /**
- * 评论组件。
+ * 自建评论组件 —— 阶段 B。
  *
- * 当前阶段：Giscus 未配置（缺 repoId/categoryId，需仓库所有者操作），
- * 暂不渲染 Giscus，只显示占位，避免向 giscus.app 发请求报 403/未安装错误。
+ * 数据走站点同源 API：
+ *   GET  /api/comments?slug=xxx   拉已审核评论
+ *   POST /api/comments            提交评论（待审核）
+ * 读者匿名/昵称，无需登录。
  *
- * 下一阶段（阶段 B）：替换为自建评论系统（Cloudflare D1 + 自定义接口，
- * 单用户 GitHub OAuth），随在线写作后台一起部署，届时本组件改写。
- *
- * 若要临时启用 Giscus：仓库所有者去 https://giscus.app 配置仓库
- * （启用 Discussions + 安装 Giscus App），拿到 repoId / categoryId 填入下方即可。
+ * 替换了之前的 Giscus（需仓库所有者配置且报 403）。
  */
-const GISCUS_REPO_ID = ""; // 配置后填入
-const GISCUS_CATEGORY_ID = ""; // 配置后填入
 
-export default function Comments() {
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+interface Comment {
+  id: number;
+  post_slug: string;
+  author: string;
+  body: string;
+  created_at: string;
+}
 
-  useEffect(() => setMounted(true), []);
+interface CommentsProps {
+  /** 文章 slug，用于隔离各文章评论 */
+  slug: string;
+}
 
-  // ID 未配置时显示占位，不渲染 Giscus，不发请求
-  if (!GISCUS_REPO_ID || !GISCUS_CATEGORY_ID) {
-    return (
-      <section
-        aria-label="评论"
-        className="mt-16 border-t border-[var(--border)] pt-10"
-      >
-        <h2 className="text-base font-medium text-[var(--foreground)]">评论</h2>
-        <p className="mt-3 text-sm text-[var(--foreground-soft)]">
-          评论系统正在搭建中，将随站点后台一起上线。
-        </p>
-      </section>
-    );
-  }
+function api(path: string): string {
+  // 同源 API，拼 basePath（子路径部署必需；根路径时 BASE_PATH 为空串）
+  return `${BASE_PATH}${path}`;
+}
 
-  // 已配置时才渲染 Giscus
-  if (!mounted) {
-    return <section aria-hidden className="h-32" />;
+function formatDate(s: string): string {
+  if (!s) return "";
+  // D1 存的是 UTC datetime，前端简单展示日期部分
+  const d = new Date(s.replace(" ", "T") + "Z");
+  if (Number.isNaN(d.getTime())) return s;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export default function Comments({ slug }: CommentsProps) {
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(
+    null,
+  );
+
+  // 表单
+  const [author, setAuthor] = useState("");
+  const [email, setEmail] = useState("");
+  const [body, setBody] = useState("");
+
+  // 拉评论
+  useEffect(() => {
+    let cancelled = false;
+    fetch(api(`/api/comments?slug=${encodeURIComponent(slug)}`))
+      .then((r) => r.json())
+      .then((d: { comments?: Comment[] }) => {
+        if (!cancelled) setComments(d.comments ?? []);
+      })
+      .catch(() => {})
+      .finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!body.trim()) {
+      setMsg({ kind: "err", text: "评论内容不能为空" });
+      return;
+    }
+    setSubmitting(true);
+    setMsg(null);
+    try {
+      const res = await fetch(api("/api/comments"), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          author: author.trim() || "匿名",
+          email: email.trim(),
+          body: body.trim(),
+        }),
+      });
+      const d = (await res.json()) as { ok?: boolean; error?: string };
+      if (res.ok && d.ok) {
+        setMsg({ kind: "ok", text: "评论已提交，审核后会显示" });
+        setBody("");
+      } else {
+        setMsg({ kind: "err", text: d.error ?? "提交失败" });
+      }
+    } catch {
+      setMsg({ kind: "err", text: "网络错误，稍后再试" });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -52,25 +109,90 @@ export default function Comments() {
     >
       <h2 className="text-base font-medium text-[var(--foreground)]">评论</h2>
       <p className="mt-1 text-sm text-[var(--foreground-soft)]">
-        登录 GitHub 后参与讨论
+        昵称留言，审核后显示
       </p>
 
-      <div className="mt-6">
-        <Giscus
-          repo="yuyeyyy01/yuyeyyy.github.io"
-          repoId={GISCUS_REPO_ID}
-          category="Announcements"
-          categoryId={GISCUS_CATEGORY_ID}
-          mapping="pathname"
-          reactionsEnabled="1"
-          emitMetadata="0"
-          inputPosition="top"
-          theme={theme === "dark" ? "github-dark" : "github-light"}
-          lang="zh-CN"
-          loading="lazy"
-        />
+      {/* 评论列表 */}
+      <div className="mt-6 space-y-5">
+        {loading ? (
+          <p className="text-sm text-[var(--foreground-muted)]">加载中…</p>
+        ) : comments.length === 0 ? (
+          <p className="text-sm text-[var(--foreground-muted)]">
+            还没有评论，来写第一条吧。
+          </p>
+        ) : (
+          comments.map((c) => (
+            <div
+              key={c.id}
+              className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
+            >
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-sm font-medium text-[var(--foreground)]">
+                  {c.author || "匿名"}
+                </span>
+                <time className="font-mono text-xs text-[var(--foreground-muted)]">
+                  {formatDate(c.created_at)}
+                </time>
+              </div>
+              {/* body 已在服务端做基本转义，React 默认再次转义，双重保险防 XSS */}
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[var(--foreground-soft)]">
+                {c.body}
+              </p>
+            </div>
+          ))
+        )}
       </div>
+
+      {/* 提交表单 */}
+      <form onSubmit={handleSubmit} className="mt-8 space-y-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input
+            type="text"
+            value={author}
+            onChange={(e) => setAuthor(e.target.value)}
+            placeholder="昵称（可选，默认匿名）"
+            maxLength={40}
+            className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] outline-none transition-colors focus:border-[var(--accent)]"
+          />
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="邮箱（可选，不公开）"
+            maxLength={100}
+            className="flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] outline-none transition-colors focus:border-[var(--accent)]"
+          />
+        </div>
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="写下你的评论…"
+          maxLength={2000}
+          rows={4}
+          className="w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm text-[var(--foreground)] outline-none transition-colors focus:border-[var(--accent)]"
+        />
+        {msg ? (
+          <p
+            className={cn(
+              "text-sm",
+              msg.kind === "ok"
+                ? "text-[var(--accent)]"
+                : "text-red-500",
+            )}
+          >
+            {msg.text}
+          </p>
+        ) : null}
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={submitting}
+            className="btn-primary inline-flex items-center gap-1.5 px-5 py-2 text-sm disabled:opacity-60"
+          >
+            {submitting ? "提交中…" : "提交评论"}
+          </button>
+        </div>
+      </form>
     </section>
   );
 }
-

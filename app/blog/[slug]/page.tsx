@@ -153,7 +153,7 @@ export default async function PostPage({ params }: PageProps) {
             )}
 
             {/* 评论 */}
-            <Comments />
+            <Comments slug={slug} />
           </article>
 
           <aside className="hidden lg:block">
