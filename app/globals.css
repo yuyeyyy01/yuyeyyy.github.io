@@ -256,6 +256,25 @@ a {
     border: 1px solid var(--border);
     border-radius: var(--radius-2xl);
   }
+
+  /* 表单输入：苹果风圆角 + 描边，focus 高亮 accent */
+  .input {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    padding: 0.5rem 0.75rem;
+    color: var(--foreground);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  .input:disabled {
+    opacity: 0.6;
+  }
 }
 
 /* ---------- 代码块（文章正文）---------- */

@@ -33,3 +33,6 @@ next-env.d.ts
 # claude code 会话/工具产物
 .claude/
 
+# D1 导出产物（构建前由 scripts/export-d1-posts.mjs 生成，不进 git）
+content/blog/.d1-export.json
+

@@ -61,3 +61,23 @@ function timingSafeEqual(a: string, b: string): boolean {
   for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return diff === 0;
 }
+
+/**
+ * 触发 Cloudflare Pages 重建部署（PR4 自动重建）。
+ * env.DEPLOY_HOOK_URL 未配置时静默跳过、返回 false，
+ * 方便本地开发或未配 hook 时写操作不报错。
+ * 用 ctx.waitUntil 包裹以保证请求结束后 fetch 仍能完成。
+ */
+export async function triggerDeploy(
+  env: CloudflareEnv,
+  waitUntil?: (p: Promise<unknown>) => void,
+): Promise<boolean> {
+  if (!env.DEPLOY_HOOK_URL) return false;
+  const p = fetch(env.DEPLOY_HOOK_URL, { method: "POST" }).then(
+    () => true,
+    () => false,
+  );
+  // 有 waitUntil（Pages Functions 上下文）时挂到生命周期，避免请求结束就取消
+  if (waitUntil) waitUntil(p);
+  return p;
+}
