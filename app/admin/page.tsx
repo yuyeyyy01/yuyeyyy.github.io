@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BASE_PATH } from "@/lib/site";
+import PostAdmin from "./posts";
 
 /**
  * 管理后台 —— 阶段 B。
@@ -16,10 +17,13 @@ function api(path: string): string {
   return `${BASE_PATH}${path}`;
 }
 
+type Tab = "comments" | "posts";
+
 export default function AdminPage() {
   const [token, setToken] = useState("");
   const [authed, setAuthed] = useState(false);
   const [error, setError] = useState("");
+  const [tab, setTab] = useState<Tab>("comments");
 
   useEffect(() => {
     const saved = localStorage.getItem("admin_token");
@@ -68,7 +72,7 @@ export default function AdminPage() {
               value={token}
               onChange={(e) => setToken(e.target.value)}
               placeholder="管理口令"
-              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm outline-none focus:border-[var(--accent)]"
+              className="input text-sm"
               autoFocus
             />
             {error ? (
@@ -94,8 +98,40 @@ export default function AdminPage() {
           退出
         </button>
       </div>
-      <CommentAdmin token={token} />
+      <div className="mt-6 flex gap-1 rounded-full border border-[var(--border)] bg-[var(--surface)] p-1 text-sm">
+        <TabBtn active={tab === "comments"} onClick={() => setTab("comments")}>
+          评论
+        </TabBtn>
+        <TabBtn active={tab === "posts"} onClick={() => setTab("posts")}>
+          文章
+        </TabBtn>
+      </div>
+      {tab === "comments" ? <CommentAdmin token={token} /> : <PostAdmin token={token} />}
     </main>
+  );
+}
+
+function TabBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        "flex-1 rounded-full px-4 py-1.5 transition-colors " +
+        (active
+          ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
+          : "text-[var(--foreground-muted)] hover:text-[var(--foreground)]")
+      }
+    >
+      {children}
+    </button>
   );
 }
 

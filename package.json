@@ -10,7 +10,9 @@
     "format": "prettier --write .",
     "index": "pagefind --site out",
     "cf:dev": "wrangler pages dev",
-    "cf:deploy": "npm run build && npm run index && wrangler pages deploy out",
+    "cf:deploy": "node scripts/export-d1-posts.mjs && npm run build && npm run index && wrangler pages deploy out",
+    "db:export": "node scripts/export-d1-posts.mjs",
+    "db:import": "node scripts/import-posts-to-d1.mjs",
     "db:init": "wrangler d1 execute yuyepage-db --file=migrations/0001_init.sql",
     "db:local": "wrangler d1 execute yuyepage-db --local --file=migrations/0001_init.sql",
     "db:query": "wrangler d1 execute yuyepage-db --command"
