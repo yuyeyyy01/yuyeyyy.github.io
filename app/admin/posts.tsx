@@ -7,7 +7,7 @@ import { BASE_PATH } from "@/lib/site";
  * 文章管理面板 —— 在 /admin 页面内通过 tab 切换显示。
  *
  * 功能：列表 / 新建 / 编辑（slug + frontmatter + MDX 源码）/ 删除 / 保存。
- * 保存后提示触发重建（PR4 自动，PR3 手动提示）。
+ * 鉴权靠 HttpOnly cookie（credentials: "include"），保存后自动触发重建（Deploy Hook）。
  */
 
 function api(path: string): string {
@@ -54,7 +54,7 @@ const EMPTY: EditState = {
   isNew: true,
 };
 
-export default function PostAdmin({ token }: { token: string }) {
+export default function PostAdmin() {
   const [list, setList] = useState<PostMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [edit, setEdit] = useState<EditState | null>(null);
@@ -64,9 +64,7 @@ export default function PostAdmin({ token }: { token: string }) {
   async function loadList() {
     setLoading(true);
     try {
-      const res = await fetch(api("/api/admin/posts"), {
-        headers: { "x-admin-token": token },
-      });
+      const res = await fetch(api("/api/admin/posts"), { credentials: "include" });
       const d = (await res.json()) as { posts?: PostMeta[] };
       setList(d.posts ?? []);
     } finally {
@@ -81,7 +79,7 @@ export default function PostAdmin({ token }: { token: string }) {
 
   async function openEdit(slug: string) {
     const res = await fetch(api(`/api/admin/posts/${slug}`), {
-      headers: { "x-admin-token": token },
+      credentials: "include",
     });
     const d = (await res.json()) as { post?: PostFull };
     if (d.post) {
@@ -126,7 +124,8 @@ export default function PostAdmin({ token }: { token: string }) {
       };
       const res = await fetch(api(`/api/admin/posts/${edit.slug}`), {
         method: edit.isNew ? "POST" : "PUT",
-        headers: { "content-type": "application/json", "x-admin-token": token },
+        headers: { "content-type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(edit.isNew ? { ...body, slug: edit.slug } : body),
       });
       const d = (await res.json()) as { ok?: boolean; rebuild?: boolean; error?: string };
@@ -153,7 +152,7 @@ export default function PostAdmin({ token }: { token: string }) {
     if (!confirm(`删除「${slug}」？`)) return;
     const res = await fetch(api(`/api/admin/posts/${slug}`), {
       method: "DELETE",
-      headers: { "x-admin-token": token },
+      credentials: "include",
     });
     const d = (await res.json()) as { rebuild?: boolean };
     if (edit?.slug === slug) setEdit(null);

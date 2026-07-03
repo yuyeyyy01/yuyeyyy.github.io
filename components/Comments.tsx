@@ -43,6 +43,9 @@ function formatDate(s: string): string {
 
 export default function Comments({ slug }: CommentsProps) {
   const [comments, setComments] = useState<Comment[]>([]);
+  // 待审核评论 —— 仅作者（HttpOnly cookie 登录）可见，就地审核
+  const [pending, setPending] = useState<Comment[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(
@@ -54,20 +57,47 @@ export default function Comments({ slug }: CommentsProps) {
   const [email, setEmail] = useState("");
   const [body, setBody] = useState("");
 
-  // 拉评论
+  // 检测作者登录态（HttpOnly cookie，JS 读不到，用 /api/admin/me 探测）
   useEffect(() => {
     let cancelled = false;
-    fetch(api(`/api/comments?slug=${encodeURIComponent(slug)}`))
+    fetch(api("/api/admin/me"), { credentials: "include" })
+      .then((r) => r.ok)
+      .then((ok) => !cancelled && setIsAdmin(ok))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 拉评论：已审核（公开）+ 待审核（仅作者）
+  useEffect(() => {
+    let cancelled = false;
+    const encoded = encodeURIComponent(slug);
+    const ok = fetch(api(`/api/comments?slug=${encoded}`))
       .then((r) => r.json())
       .then((d: { comments?: Comment[] }) => {
         if (!cancelled) setComments(d.comments ?? []);
       })
-      .catch(() => {})
-      .finally(() => !cancelled && setLoading(false));
+      .catch(() => {});
+    // 作者登录后额外拉待审核，再按当前文章 slug 过滤（admin 接口返回全量 pending）
+    const pen = isAdmin
+      ? fetch(api(`/api/admin/comments?status=pending`), {
+          credentials: "include",
+        })
+          .then((r) => (r.ok ? r.json() : { comments: [] }))
+          .then((d: { comments?: (Comment & { post_slug: string })[] }) => {
+            if (!cancelled)
+              setPending(
+                (d.comments ?? []).filter((c) => c.post_slug === slug),
+              );
+          })
+          .catch(() => {})
+      : Promise.resolve();
+    Promise.all([ok, pen]).finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, isAdmin]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -99,6 +129,29 @@ export default function Comments({ slug }: CommentsProps) {
       setMsg({ kind: "err", text: "网络错误，稍后再试" });
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  // 作者就地审核：通过 → 移入已审核列表；删除 → 直接移除
+  async function moderate(id: number, action: "approve" | "delete") {
+    if (!isAdmin) return;
+    try {
+      const res = await fetch(api(`/api/admin/comments?action=${action}`), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id }),
+      });
+      const d = (await res.json()) as { ok?: boolean };
+      if (res.ok && d.ok) {
+        if (action === "approve") {
+          const c = pending.find((x) => x.id === id);
+          if (c) setComments((prev) => [c, ...prev]);
+        }
+        setPending((prev) => prev.filter((x) => x.id !== id));
+      }
+    } catch {
+      /* 静默失败，作者可重试 */
     }
   }
 
@@ -142,6 +195,54 @@ export default function Comments({ slug }: CommentsProps) {
           ))
         )}
       </div>
+
+      {/* 待审核 —— 仅作者可见，就地审核 */}
+      {isAdmin && pending.length > 0 ? (
+        <div className="mt-8 rounded-xl border border-dashed border-[var(--border-strong)] p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-medium text-[var(--foreground)]">
+              待审核（{pending.length}）
+            </h3>
+            <span className="text-xs text-[var(--foreground-muted)]">
+              作者视图 · 仅你可见
+            </span>
+          </div>
+          <ul className="mt-3 space-y-3">
+            {pending.map((c) => (
+              <li
+                key={c.id}
+                className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3"
+              >
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-sm font-medium text-[var(--foreground)]">
+                    {c.author || "匿名"}
+                  </span>
+                  <time className="font-mono text-xs text-[var(--foreground-muted)]">
+                    {formatDate(c.created_at)}
+                  </time>
+                </div>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-[var(--foreground-soft)]">
+                  {c.body}
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={() => moderate(c.id, "approve")}
+                    className="btn-primary px-3 py-1 text-xs"
+                  >
+                    通过
+                  </button>
+                  <button
+                    onClick={() => moderate(c.id, "delete")}
+                    className="btn-secondary px-3 py-1 text-xs"
+                  >
+                    删除
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       {/* 提交表单 */}
       <form onSubmit={handleSubmit} className="mt-8 space-y-3">

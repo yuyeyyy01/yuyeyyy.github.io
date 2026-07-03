@@ -6,11 +6,11 @@ import PostAdmin from "./posts";
 
 /**
  * 管理后台 —— 阶段 B。
- * 单用户口令登录（不接 OAuth，你一人用）。
- * PR2：评论审核；PR3：文章管理。
+ * 账号 + 密码登录（PBKDF2 哈希存 D1），HttpOnly cookie 保持登录态。
+ * 多账号（如 yuye666 / kazamasuichiku），登录任一即可。
  *
- * 登录流程：输入口令 → 调 /api/admin/comments 试鉴权 → 成功则存 localStorage，
- * 之后管理请求都带 x-admin-token header。
+ * 登录流程：用户名+密码 → POST /api/admin/login（设 HttpOnly cookie）
+ * → 之后 admin 请求自动带 cookie（credentials: "include"），无需手动加 header。
  */
 
 function api(path: string): string {
@@ -20,42 +20,61 @@ function api(path: string): string {
 type Tab = "comments" | "posts";
 
 export default function AdminPage() {
-  const [token, setToken] = useState("");
   const [authed, setAuthed] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  // 表单
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [tab, setTab] = useState<Tab>("comments");
 
+  // 加载时探测 cookie 登录态
   useEffect(() => {
-    const saved = localStorage.getItem("admin_token");
-    if (saved) {
-      setToken(saved);
-      setAuthed(true);
-    }
+    fetch(api("/api/admin/me"), { credentials: "include" })
+      .then((r) => r.ok)
+      .then((ok) => setAuthed(ok))
+      .finally(() => setChecking(false));
   }, []);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    // 用拉待审核评论试鉴权
     try {
-      const res = await fetch(api("/api/admin/comments?status=pending"), {
-        headers: { "x-admin-token": token },
+      const res = await fetch(api("/api/admin/login"), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username: username.trim(), password }),
       });
-      if (res.ok) {
-        localStorage.setItem("admin_token", token);
+      const d = (await res.json()) as { ok?: boolean; error?: string };
+      if (res.ok && d.ok) {
         setAuthed(true);
+        setPassword("");
       } else {
-        setError("口令错误");
+        setError(d.error ?? "登录失败");
       }
     } catch {
       setError("网络错误");
     }
   }
 
-  function logout() {
-    localStorage.removeItem("admin_token");
-    setToken("");
+  async function logout() {
+    await fetch(api("/api/admin/logout"), {
+      method: "POST",
+      credentials: "include",
+    });
     setAuthed(false);
+    setUsername("");
+    setPassword("");
+  }
+
+  if (checking) {
+    return (
+      <main className="container-page py-20">
+        <p className="text-sm text-[var(--foreground-muted)]">检查登录态…</p>
+      </main>
+    );
   }
 
   if (!authed) {
@@ -64,16 +83,25 @@ export default function AdminPage() {
         <div className="mx-auto max-w-sm">
           <h1 className="text-2xl font-semibold tracking-tight">管理后台</h1>
           <p className="mt-2 text-sm text-[var(--foreground-soft)]">
-            输入口令登录
+            账号密码登录
           </p>
           <form onSubmit={login} className="mt-6 space-y-3">
             <input
-              type="password"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="管理口令"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="用户名"
+              autoComplete="username"
               className="input text-sm"
               autoFocus
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="密码"
+              autoComplete="current-password"
+              className="input text-sm"
             />
             {error ? (
               <p className="text-sm text-red-500">{error}</p>
@@ -91,10 +119,7 @@ export default function AdminPage() {
     <main className="container-page py-20">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">管理后台</h1>
-        <button
-          onClick={logout}
-          className="btn-secondary px-4 py-1.5 text-sm"
-        >
+        <button onClick={logout} className="btn-secondary px-4 py-1.5 text-sm">
           退出
         </button>
       </div>
@@ -106,7 +131,7 @@ export default function AdminPage() {
           文章
         </TabBtn>
       </div>
-      {tab === "comments" ? <CommentAdmin token={token} /> : <PostAdmin token={token} />}
+      {tab === "comments" ? <CommentAdmin /> : <PostAdmin />}
     </main>
   );
 }
@@ -136,7 +161,7 @@ function TabBtn({
 }
 
 /** 评论审核面板 */
-function CommentAdmin({ token }: { token: string }) {
+function CommentAdmin() {
   const apiPath = api("/api/admin/comments");
   const [pending, setPending] = useState<
     { id: number; post_slug: string; author: string; body: string; created_at: string }[]
@@ -146,9 +171,7 @@ function CommentAdmin({ token }: { token: string }) {
   async function loadPending() {
     setLoading(true);
     try {
-      const res = await fetch(`${apiPath}?status=pending`, {
-        headers: { "x-admin-token": token },
-      });
+      const res = await fetch(`${apiPath}?status=pending`, { credentials: "include" });
       const d = (await res.json()) as { comments?: typeof pending };
       setPending(d.comments ?? []);
     } finally {
@@ -158,13 +181,13 @@ function CommentAdmin({ token }: { token: string }) {
 
   useEffect(() => {
     loadPending();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function approve(id: number) {
     await fetch(`${apiPath}?action=approve`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-admin-token": token },
+      headers: { "content-type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ id }),
     });
     loadPending();
@@ -173,7 +196,8 @@ function CommentAdmin({ token }: { token: string }) {
   async function del(id: number) {
     await fetch(`${apiPath}?action=delete`, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-admin-token": token },
+      headers: { "content-type": "application/json" },
+      credentials: "include",
       body: JSON.stringify({ id }),
     });
     loadPending();

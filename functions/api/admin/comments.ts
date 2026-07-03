@@ -14,7 +14,7 @@ interface AdminBody {
 /** 列评论：pending / approved / all */
 export const onRequestGet: PagesFunction<EnvContext["env"]> = async (ctx) => {
   if (ctx.request.method === "OPTIONS") return corsPreflight();
-  if (!isAdmin(ctx.env, ctx.request)) return json({ error: "未授权" }, 401);
+  if (!(await isAdmin(ctx.env, ctx.request))) return json({ error: "未授权" }, 401);
 
   const url = new URL(ctx.request.url);
   const status = url.searchParams.get("status") ?? "pending";
@@ -40,7 +40,7 @@ export const onRequestGet: PagesFunction<EnvContext["env"]> = async (ctx) => {
 /** 通过 / 删除 */
 export const onRequestPost: PagesFunction<EnvContext["env"]> = async (ctx) => {
   if (ctx.request.method === "OPTIONS") return corsPreflight();
-  if (!isAdmin(ctx.env, ctx.request)) return json({ error: "未授权" }, 401);
+  if (!(await isAdmin(ctx.env, ctx.request))) return json({ error: "未授权" }, 401);
 
   const url = new URL(ctx.request.url);
   const action = url.searchParams.get("action"); // approve | delete
