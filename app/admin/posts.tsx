@@ -129,9 +129,14 @@ export default function PostAdmin({ token }: { token: string }) {
         headers: { "content-type": "application/json", "x-admin-token": token },
         body: JSON.stringify(edit.isNew ? { ...body, slug: edit.slug } : body),
       });
-      const d = (await res.json()) as { ok?: boolean; error?: string };
+      const d = (await res.json()) as { ok?: boolean; rebuild?: boolean; error?: string };
       if (res.ok && d.ok) {
-        setMsg({ kind: "ok", text: "已保存。构建后生效（PR4 起自动重建）" });
+        setMsg({
+          kind: "ok",
+          text: d.rebuild
+            ? "已保存，已触发重建（约 1-2 分钟后上线）"
+            : "已保存（草稿，未触发重建）",
+        });
         setEdit({ ...edit, isNew: false });
         loadList();
       } else {
@@ -146,12 +151,16 @@ export default function PostAdmin({ token }: { token: string }) {
 
   async function del(slug: string) {
     if (!confirm(`删除「${slug}」？`)) return;
-    await fetch(api(`/api/admin/posts/${slug}`), {
+    const res = await fetch(api(`/api/admin/posts/${slug}`), {
       method: "DELETE",
       headers: { "x-admin-token": token },
     });
+    const d = (await res.json()) as { rebuild?: boolean };
     if (edit?.slug === slug) setEdit(null);
     loadList();
+    if (d.rebuild) {
+      setMsg({ kind: "ok", text: "已删除，已触发重建（约 1-2 分钟后生效）" });
+    }
   }
 
   if (edit) {
@@ -270,6 +279,16 @@ export default function PostAdmin({ token }: { token: string }) {
           新建
         </button>
       </div>
+      {msg ? (
+        <p
+          className={
+            "mt-3 text-sm " +
+            (msg.kind === "ok" ? "text-[var(--accent)]" : "text-red-500")
+          }
+        >
+          {msg.text}
+        </p>
+      ) : null}
       {loading ? (
         <p className="mt-3 text-sm text-[var(--foreground-muted)]">加载中…</p>
       ) : (

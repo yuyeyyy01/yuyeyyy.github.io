@@ -11,6 +11,7 @@
     "index": "pagefind --site out",
     "cf:dev": "wrangler pages dev",
     "cf:deploy": "node scripts/export-d1-posts.mjs && npm run build && npm run index && wrangler pages deploy out",
+    "cf:deploy:root": "NEXT_PUBLIC_BASE_PATH= NEXT_PUBLIC_SITE_URL=https://yuyepage.pages.dev node scripts/export-d1-posts.mjs && NEXT_PUBLIC_BASE_PATH= NEXT_PUBLIC_SITE_URL=https://yuyepage.pages.dev npm run build && npm run index && wrangler pages deploy out",
     "db:export": "node scripts/export-d1-posts.mjs",
     "db:import": "node scripts/import-posts-to-d1.mjs",
     "db:init": "wrangler d1 execute yuyepage-db --file=migrations/0001_init.sql",

@@ -5,7 +5,7 @@
  * PUT    /api/admin/posts/:slug   → 保存修改
  * DELETE /api/admin/posts/:slug   → 删除
  */
-import { type EnvContext, json, corsPreflight, isAdmin } from "../../../_lib";
+import { type EnvContext, json, corsPreflight, isAdmin, triggerDeploy } from "../../../_lib";
 
 interface PostRow {
   slug: string;
@@ -67,8 +67,11 @@ export const onRequestPut: PagesFunction<EnvContext["env"]> = async (ctx) => {
   }
 
   const db = ctx.env.yuyepage_db;
-  const exists = await db.prepare("SELECT slug FROM posts WHERE slug = ?").bind(slug).first();
-  if (!exists) return json({ error: "文章不存在" }, 404);
+  const before = await db
+    .prepare("SELECT published FROM posts WHERE slug = ?")
+    .bind(slug)
+    .first<{ published: number }>();
+  if (!before) return json({ error: "文章不存在" }, 404);
 
   // 动态拼 update，只更新传入的字段
   const fields: string[] = [];
@@ -89,7 +92,7 @@ export const onRequestPut: PagesFunction<EnvContext["env"]> = async (ctx) => {
 
   if (fields.length === 1) {
     // 只有 updated_at，没实际字段
-    return json({ ok: true, updated: 0 });
+    return json({ ok: true, updated: 0, rebuild: false });
   }
 
   values.push(slug);
@@ -98,7 +101,16 @@ export const onRequestPut: PagesFunction<EnvContext["env"]> = async (ctx) => {
     .bind(...values)
     .run();
 
-  return json({ ok: true });
+  // 触发重建的条件：更新后处于已发布状态，且确实改了内容/frontmatter
+  // （草稿修改不触发；草稿→发布会触发；已发布改内容会触发）
+  const willPublish = (data.published ?? before.published) === 1;
+  const changedContent = fields.some((f) => f !== "updated_at = datetime('now')");
+  const rebuild = willPublish && changedContent;
+  if (rebuild) {
+    await triggerDeploy(ctx.env, (p) => ctx.waitUntil(p));
+  }
+
+  return json({ ok: true, rebuild });
 };
 
 export const onRequestDelete: PagesFunction<EnvContext["env"]> = async (ctx) => {
@@ -108,6 +120,18 @@ export const onRequestDelete: PagesFunction<EnvContext["env"]> = async (ctx) => 
   const slug = await getSlug(ctx);
   if (!slug) return json({ error: "缺少 slug" }, 400);
 
-  await ctx.env.yuyepage_db.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
-  return json({ ok: true });
+  const db = ctx.env.yuyepage_db;
+  const row = await db
+    .prepare("SELECT published FROM posts WHERE slug = ?")
+    .bind(slug)
+    .first<{ published: number }>();
+  if (!row) return json({ error: "文章不存在" }, 404);
+
+  await db.prepare("DELETE FROM posts WHERE slug = ?").bind(slug).run();
+
+  // 删除已发布文章后触发重建，让前台列表更新
+  if (row.published === 1) {
+    await triggerDeploy(ctx.env, (p) => ctx.waitUntil(p));
+  }
+  return json({ ok: true, rebuild: row.published === 1 });
 };
