@@ -21,7 +21,15 @@ yarn-error.log*
 
 # env
 .env*.local
+.dev.vars
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cloudflare / wrangler 本地状态
+.wrangler/
+
+# claude code 会话/工具产物
+.claude/
+
