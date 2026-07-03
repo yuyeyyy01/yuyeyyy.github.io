@@ -286,46 +286,21 @@ NEXT_PUBLIC_SITE_URL=http://localhost:8788/yuyeyyy.github.io
 ## 11. 待办与后续
 
 - [x] **PR4 自动重建接入**：`posts.ts`（POST）与 `[slug].ts`（PUT/DELETE）写操作成功后已调用 `triggerDeploy(env, ctx.waitUntil)`；草稿不触发，草稿→发布触发，已发布改内容触发，删除已发布触发。评论接口暂不触发重建（评论是运行时 API，不需重建）。
-- [ ] **图片上传闭环（GitHub API）**：`functions/api/admin/upload.ts` 已改成调 GitHub Contents API 提交图片到 `public/images/`，无需绑卡。待用户建 PAT + 填 `GITHUB_TOKEN` 环境变量 + 建 Deploy Hook 填 `DEPLOY_HOOK_URL`，详见第 12 节。
+- [ ] **图片上传**：已移除（用户主动放弃，走外链）。git 历史保留 R2 版与 GitHub API 版实现，详见第 12 节。
 - [ ] **正式根路径迁移**：见第 10 节（pages.dev 方案，代码已就绪，待首次部署）。
 - [x] **删除 GitHub Pages workflow**：`.github/workflows/deploy.yml` 已删，避免双发布。
 - [ ] `content_html` 字段当前未使用，评估是否在保存时预渲染 HTML 或移除该列。
 - [ ] 评论 admin 接口路径：文件头注释写的是子路径 `/approve`、`/delete`，实际实现是 `?action=` query param，二者已不一致，后续可统一。
 - [ ] `functions/` 目录的 `tsc` 类型检查有既存报错（`PagesFunction<EnvContext["env"]>` 泛型对 env 解析不准），不影响 esbuild 部署与 `next build`，后续可单独修。
 
-## 12. 图片上传（GitHub API）
+## 12. 图片（不上传，走外链）
 
-文章配图上传走 GitHub 仓库（不绑信用卡、不用 R2）：后台拖拽/粘贴图片 →
-`functions/api/admin/upload.ts` 调 GitHub Contents API 把图片 base64 提交到
-`public/images/<YYYY-MM-DD>/<uuid>.<ext>` → 触发 Deploy Hook 重建 →
-图片随下次构建上线（约 1-2 分钟）。图片进 git 历史，可追溯可回滚。
+后台编辑器**不做图片上传**（用户主动放弃，避免 R2 绑卡 / GitHub PAT 配置的麻烦）。
+作者写文章时直接贴外链图片 URL，或本地放图后 git push 到 `public/images/` 再用
+`/images/xxx.png` 引用。
 
-Edge 运行时没有文件系统，所以用 GitHub REST API 做提交（而非直接写文件）。
+- 工具栏源码模式的 "🖼 图片" 按钮只插入 `![alt](https://)` markdown 语法骨架，
+  作者把 `https://` 换成外链图床地址即可。
+- 富文本模式（Crepe）的图片块同理，粘 URL 即可。
 
-环境变量（Cloudflare Dashboard 或 `.dev.vars`）：
-
-| 变量 | 说明 | 例 |
-|---|---|---|
-| `GITHUB_TOKEN` | PAT，只需目标仓库 `contents:write` 权限 | `ghp_xxx` |
-| `GITHUB_REPO` | 仓库全名（可省，默认 `yuyeyyy01/yuyeyyy.github.io`） | `yuyeyyy01/yuyeyyy.github.io` |
-| `GITHUB_BRANCH` | 提交分支（可省，默认 `main`） | `main` |
-| `DEPLOY_HOOK_URL` | Pages Deploy Hook，提交后触发重建 | `https://api.cloudflare.com/...` |
-
-启用步骤：
-
-1. **建 PAT**：GitHub → Settings → Developer settings → Personal access tokens → Fine-grained，
-   只勾选目标仓库 `yuyeyyy01/yuyeyyy.github.io`，权限 `Contents: Read and write`。
-2. **填环境变量**：Cloudflare Dashboard → yuyepage Pages → Settings → Environment variables，
-   Production 加 `GITHUB_TOKEN`（建议加密）。`GITHUB_REPO`/`GITHUB_BRANCH` 有默认值可不填。
-3. **Deploy Hook**：Pages → Settings → Builds & deployments → Deploy hooks → 建 hook（branch main），
-   URL 填回 `DEPLOY_HOOK_URL`。
-
-访问：
-
-- 上传的图片通过 `/images/<date>/<file>` 访问（`public/images/` 静态导出后映射到 `/images/`）。
-- 图片随仓库走 CDN，无需单独读取接口。
-
-故障状态：
-
-- `GITHUB_TOKEN` 未配置 → upload 接口返回 503，编辑器拖拽上传提示"未配置 GITHUB_TOKEN"。
-- PAT 权限不足 / 仓库错 → 502，提示 GitHub API 错误详情。
+如以后要恢复上传，git 历史里有 R2 版和 GitHub API 版两个实现可参考。

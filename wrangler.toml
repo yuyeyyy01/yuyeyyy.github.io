@@ -16,5 +16,4 @@ database_id = "395f3cec-95ed-44a1-a0a5-855c926d32fc"
 # 部署时通过 Cloudflare Dashboard 配置环境变量
 # - ADMIN_TOKEN：cookie 签名 HMAC 密钥
 # - DEPLOY_HOOK_URL：Pages Deploy Hook（自动重建用）
-# - GITHUB_TOKEN / GITHUB_REPO / GITHUB_BRANCH：图片上传到 GitHub 仓库用
 # NEXT_PUBLIC_BASE_PATH 在根路径部署时留空

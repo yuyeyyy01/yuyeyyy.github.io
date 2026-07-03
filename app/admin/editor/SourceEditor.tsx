@@ -7,12 +7,6 @@ import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
 import { defaultKeymap, historyKeymap, history } from "@codemirror/commands";
 import { languages } from "@codemirror/language-data";
-import { uploadImage, imageMarkdown } from "@/lib/adminUpload";
-import {
-  useUploadToast,
-  getImageFileFromDataTransfer,
-  hasImageInDataTransfer,
-} from "./Toast";
 
 /**
  * CodeMirror MDX 源码编辑器 —— 富文本模式的源码对照。
@@ -22,9 +16,8 @@ import {
  *
  * 双向：value 受控，onChange 回写父组件；父切换模式时用新 value 重建。
  *
- * 图片拖拽/粘贴上传：在 host 上监听 drop/paste，preventDefault 后调
- * uploadImage，成功后用 view.dispatch 在光标处插入图片 markdown（
- * 光标处插入，选中区域会被替换）。
+ * 工具栏插入：监听 window 的 "editor-insert" CustomEvent（Toolbar 源码模式按钮
+ * dispatch），在光标处插入对应 markdown 文本。
  */
 
 export default function SourceEditor({
@@ -38,8 +31,6 @@ export default function SourceEditor({
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   onChangeRef.current = onChange;
-
-  const { toastEl, show } = useUploadToast();
 
   useEffect(() => {
     const host = hostRef.current;
@@ -104,65 +95,13 @@ export default function SourceEditor({
     };
     window.addEventListener("editor-insert", onInsert as EventListener);
 
-    // 图片上传 + 光标处插入 markdown 的共用处理
-    const handleImageFile = async (file: File) => {
-      show(`上传中：${file.name || "图片"}…`, "info");
-      const { url, error } = await uploadImage(file);
-      if (error || !url) {
-        show(error ?? "上传失败", "error", 3000);
-        return;
-      }
-      const md = imageMarkdown(url, file.name || "");
-      const v = viewRef.current;
-      if (!v) {
-        show("编辑器未就绪", "error", 3000);
-        return;
-      }
-      const s = v.state;
-      const sel = s.selection.main;
-      v.dispatch({
-        changes: { from: sel.from, to: sel.to, insert: md },
-        selection: { anchor: sel.from + md.length, head: sel.from + md.length },
-      });
-      v.focus();
-      show("图片已插入", "success", 1500);
-    };
-
-    const onDrop = (e: DragEvent) => {
-      if (!hasImageInDataTransfer(e.dataTransfer)) return;
-      e.preventDefault();
-      const file = getImageFileFromDataTransfer(e.dataTransfer);
-      if (!file) return;
-      void handleImageFile(file);
-    };
-
-    const onPaste = (e: ClipboardEvent) => {
-      if (!hasImageInDataTransfer(e.clipboardData)) return;
-      e.preventDefault();
-      const file = getImageFileFromDataTransfer(e.clipboardData);
-      if (!file) return;
-      void handleImageFile(file);
-    };
-
-    // capture 阶段拦截：CodeMirror 对 drop/paste 有自己的处理（会插入文件名/文本），
-    // 用 capture=true 确保我们先拿到事件并 preventDefault。
-    host.addEventListener("drop", onDrop as EventListener, true);
-    host.addEventListener("paste", onPaste as EventListener, true);
-
     return () => {
       window.removeEventListener("editor-insert", onInsert as EventListener);
-      host.removeEventListener("drop", onDrop as EventListener, true);
-      host.removeEventListener("paste", onPaste as EventListener, true);
       view.destroy();
       viewRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return (
-    <>
-      <div ref={hostRef} className="codemirror-host h-full min-h-[500px]" />
-      {toastEl}
-    </>
-  );
+  return <div ref={hostRef} className="codemirror-host h-full min-h-[500px]" />;
 }
