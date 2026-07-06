@@ -214,7 +214,7 @@ void main() {
   miniFragment: `#define COL_TEAL vec3(0.31,0.82,0.78)
 #define COL_AMBER vec3(0.91,0.69,0.29)
 #define COL_DARK vec3(0.02,0.025,0.03)
-float smin(float a,float b,float k){float h=clamp(0.5+0.5*(a-b)/k,0.0,1.0);return mix(a,b,h)-k*h*(1-h);}
+float smin(float a,float b,float k){float h=clamp(0.5+0.5*(a-b)/k,0.0,1.0);return mix(a,b,h)-k*h*(1.0-h);}
 float sdSphere(vec3 p,float r){return length(p)-r;}
 float sdOct(vec3 p,float s){p=abs(p);return (p.x+p.y+p.z-s)*0.57735027;}
 mat3 rotY(float a){float c=cos(a),s=sin(a);return mat3(c,0.0,s,0.0,1.0,0.0,-s,0.0,c);}
