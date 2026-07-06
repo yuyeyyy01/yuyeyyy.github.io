@@ -54,11 +54,12 @@ float cloudDensity(vec3 p) {
 }
 
 // ---- 朝光源方向采样光学深度（散射衰减用）----
+// 3 步够了（原 5 步视觉无差，省 40% fbm 调用）
 float lightOpticalDepth(vec3 p, vec3 lightDir) {
   float depth = 0.0;
   vec3 lp = p;
-  for (int j = 0; j < 5; j++) {
-    lp += lightDir * 0.1;
+  for (int j = 0; j < 3; j++) {
+    lp += lightDir * 0.15;
     depth += cloudDensity(lp);
   }
   return depth;

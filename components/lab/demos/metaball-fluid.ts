@@ -12,7 +12,7 @@ export const metaballFluid: LabDemo = {
   difficulty: "advanced",
   mesh: "fullscreen",
   uniforms: [
-    { name: "u_count", label: "球数", kind: "float", min: 2, max: 8, step: 1, default: 5 },
+    { name: "u_count", label: "球数", kind: "float", min: 2, max: 6, step: 1, default: 5 },
     { name: "u_blend", label: "融合度", kind: "float", min: 0.1, max: 2.0, step: 0.01, default: 0.6 },
     { name: "u_metallic", label: "金属度", kind: "float", min: 0, max: 1, step: 0.01, default: 0.7 },
   ],
@@ -50,7 +50,7 @@ float sdSphere(vec3 p, float r) { return length(p) - r; }
 float sceneSDF(vec3 p) {
   float d = 1e9;
   int n = int(u_count);
-  for (int i = 0; i < 8; i++) {
+  for (int i = 0; i < 6; i++) {
     if (i >= n) break;
     float fi = float(i);
     vec3 c = vec3(
@@ -63,13 +63,15 @@ float sceneSDF(vec3 p) {
   return d;
 }
 
+// tetrahedral 差分：4 次 SDF（原 6 次），省 33% 法线成本
 vec3 calcNormal(vec3 p) {
   vec2 e = vec2(0.0008, 0.0);
-  return normalize(vec3(
-    sceneSDF(p + e.xyy) - sceneSDF(p - e.xyy),
-    sceneSDF(p + e.yxy) - sceneSDF(p - e.yxy),
-    sceneSDF(p + e.yyx) - sceneSDF(p - e.yyx)
-  ));
+  return normalize(
+    sceneSDF(p + e.xyy) * vec3(1,1,1)
+    + sceneSDF(p + e.yxy) * vec3(-1,-1,1)
+    + sceneSDF(p + e.yyx) * vec3(-1,1,-1)
+    + sceneSDF(p - e.xxx) * vec3(1,-1,-1)
+  );
 }
 
 void main() {
@@ -79,7 +81,7 @@ void main() {
 
   float t = 0.0;
   bool hit = false;
-  for (int i = 0; i < 96; i++) {
+  for (int i = 0; i < METABALL_STEPS; i++) {
     vec3 pos = ro + rd * t;
     float d = sceneSDF(pos);
     if (d < 0.001) { hit = true; break; }

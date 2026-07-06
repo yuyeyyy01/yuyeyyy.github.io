@@ -111,8 +111,8 @@ export default function LabPlayground({
     // 移动端注入低步数宏，降 GPU 负载。demo fragment 用 RAYMARCH_STEPS / REFLECT_STEPS 替代硬编码。
     const mobile = window.matchMedia("(max-width: 768px)").matches || (navigator.hardwareConcurrency || 8) <= 4;
     const inject = mobile
-      ? "#define RAYMARCH_STEPS 32\n#define REFLECT_STEPS 32\n"
-      : "#define RAYMARCH_STEPS 64\n#define REFLECT_STEPS 64\n";
+      ? "#define RAYMARCH_STEPS 32\n#define REFLECT_STEPS 32\n#define METABALL_STEPS 48\n"
+      : "#define RAYMARCH_STEPS 64\n#define REFLECT_STEPS 64\n#define METABALL_STEPS 96\n";
     const fragSrc = fragment.replace("#version 300 es", "#version 300 es\n" + inject);
     const fs = compile(gl, gl.FRAGMENT_SHADER, fragSrc);
     if (!vs || !fs) return;
@@ -178,7 +178,9 @@ export default function LabPlayground({
 
     function resize() {
       if (!canvas) return;
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // 详情页 canvas 70vh 不大，dpr 降到 1.25/1 省_gpu；raymarch 重 shader 不需要 2×
+      const mobile = window.matchMedia("(max-width: 768px)").matches;
+      const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1 : 1.25);
       const w = Math.max(1, Math.floor(canvas.clientWidth * dpr));
       const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
       if (canvas.width !== w || canvas.height !== h) {
