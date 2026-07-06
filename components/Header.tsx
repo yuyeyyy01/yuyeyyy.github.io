@@ -37,6 +37,7 @@ export default function Header() {
 
         <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <NavLink href="/blog/">博客</NavLink>
+          <NavLink href="/lab/">实验室</NavLink>
           <NavLink href="/archive/">归档</NavLink>
           <NavLink href="/about/">关于</NavLink>
           <HeaderSearch />
