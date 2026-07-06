@@ -175,6 +175,9 @@ export function renderShaderHTML(opts: RenderShaderHTMLOpts): string {
     "if(disposed){return;}" +
     "raf=requestAnimationFrame(frame);" +
     "var t=(performance.now()-t0)/1000;" +
+    // 每帧重绑顶点：canvas.width 被 resize 重设会清空默认 VAO 的 attrib 状态，
+    // 即使 resize 里调了 bindVert 也可能在 raf 时序中被重置，每帧绑最稳。
+    "bindVert();" +
     "gl.uniform1f(uTime,t);" +
     "gl.uniform2f(uRes,canvas.width,canvas.height);" +
     "gl.clearColor(0,0,0,0);" +
