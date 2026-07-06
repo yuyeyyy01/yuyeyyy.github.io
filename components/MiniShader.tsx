@@ -63,7 +63,7 @@ export default function MiniShader({ fragment, label, className }: MiniShaderPro
       gl.shaderSource(sh, src);
       gl.compileShader(sh);
       if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-        console.warn("shader compile error:", gl.getShaderInfoLog(sh));
+        console.warn("shader compile error [" + (label ?? "?") + "]:", gl.getShaderInfoLog(sh));
         gl.deleteShader(sh);
         return null;
       }

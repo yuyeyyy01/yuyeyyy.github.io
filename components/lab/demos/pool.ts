@@ -189,7 +189,7 @@ void main() {
 `,
   miniFragment: `float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
-  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+  return mix(mix(hash(i),hash(i+vec2(1.0,0.0)),f.x),mix(hash(i+vec2(0.0,1.0)),hash(i+vec2(1.0,1.0)),f.x),f.y);}
 float fbm(vec2 p){float v=0.0,a=0.5;for(int i=0;i<4;i++){v+=a*noise(p);p*=2.0;a*=0.5;}return v;}
 float waveH(vec2 p){float h=fbm(p*3.0+vec2(iTime*0.15,0.0))-0.5;h+=(fbm(p*6.0-vec2(0.0,iTime*0.1))-0.5)*0.5;return h*0.015;}
 vec3 ballShade(vec2 d,float r){
@@ -197,7 +197,7 @@ vec3 ballShade(vec2 d,float r){
   vec3 l=normalize(vec3(0.4,0.6,-0.5));
   float ndl=max(dot(bn,l),0.0);
   vec3 c=mix(vec3(0.31,0.82,0.78),vec3(0.91,0.69,0.29),pow(ndl,6.0)*0.4);
-  c+=vec3(0.91,0.69,0.29)*pow(max(dot(bn,normalize(l+vec3(0,0,1))),0.0),32.0)*0.5;
+  c+=vec3(0.91,0.69,0.29)*pow(max(dot(bn,normalize(l+vec3(0.0,0.0,1.0))),0.0),32.0)*0.5;
   c*=mix(0.55,1.0,smoothstep(0.0,r*r*0.7,dot(d,d)));
   return c;
 }

@@ -107,10 +107,10 @@ float hash(vec3 p) {
 float noise(vec3 p) {
   vec3 i = floor(p), f = fract(p);
   f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x),
-                 mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
-             mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x),
-                 mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
+  return mix(mix(mix(hash(i), hash(i + vec3(1.0,0.0,0.0)), f.x),
+                 mix(hash(i + vec3(0.0,1.0,0.0)), hash(i + vec3(1.0,1.0,0.0)), f.x), f.y),
+             mix(mix(hash(i + vec3(0.0,0.0,1.0)), hash(i + vec3(1.0,0.0,1.0)), f.x),
+                 mix(hash(i + vec3(0.0,1.0,1.0)), hash(i + vec3(1.0,1.0,1.0)), f.x), f.y), f.z);
 }
 float fbm(vec3 p) {
   float v = 0.0, a = 0.5;
@@ -217,7 +217,7 @@ void main() {
 float smin(float a,float b,float k){float h=clamp(0.5+0.5*(a-b)/k,0.0,1.0);return mix(a,b,h)-k*h*(1-h);}
 float sdSphere(vec3 p,float r){return length(p)-r;}
 float sdOct(vec3 p,float s){p=abs(p);return (p.x+p.y+p.z-s)*0.57735027;}
-mat3 rotY(float a){float c=cos(a),s=sin(a);return mat3(c,0,s,0,1,0,-s,0,c);}
+mat3 rotY(float a){float c=cos(a),s=sin(a);return mat3(c,0.0,s,0.0,1.0,0.0,-s,0.0,c);}
 float shape(vec3 p,float r){return mix(sdSphere(p,r),sdOct(p,r),0.5);}
 float scene(vec3 p){
   vec3 q=rotY(iTime*0.2)*p;
@@ -226,24 +226,24 @@ float scene(vec3 p){
   d=smin(d,shape(p-c1,0.4),0.3);
   return d;
 }
-vec3 nor(vec3 p){vec2 e=vec2(0.0008,0);
-  return normalize(scene(p+e.xyy)*vec3(1,1,1)+scene(p+e.yxy)*vec3(-1,-1,1)+scene(p+e.yyx)*vec3(-1,1,-1)+scene(p-e.xxx)*vec3(1,-1,-1));}
+vec3 nor(vec3 p){vec2 e=vec2(0.0008,0.0);
+  return normalize(scene(p+e.xyy)*vec3(1.0,1.0,1.0)+scene(p+e.yxy)*vec3(-1.0,-1.0,1.0)+scene(p+e.yyx)*vec3(-1.0,1.0,-1.0)+scene(p-e.xxx)*vec3(1.0,-1.0,-1.0));}
 float hash(vec3 p){p=fract(p*0.3183099+0.1);p*=17.0;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
 float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
-  return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
-             mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);}
+  return mix(mix(mix(hash(i),hash(i+vec3(1.0,0.0,0.0)),f.x),mix(hash(i+vec3(0.0,1.0,0.0)),hash(i+vec3(1.0,1.0,0.0)),f.x),f.y),
+             mix(mix(hash(i+vec3(0.0,0.0,1.0)),hash(i+vec3(1.0,0.0,1.0)),f.x),mix(hash(i+vec3(0.0,1.0,1.0)),hash(i+vec3(1.0,1.0,1.0)),f.x),f.y),f.z);}
 float fbm(vec3 p){float v=0.0,a=0.5;for(int i=0;i<2;i++){v+=a*noise(p);p*=2.0;a*=0.5;}return v;}
 vec3 bg(vec3 d){float t=clamp(d.y*0.5+0.5,0.0,1.0);
   vec3 s=mix(COL_DARK,COL_TEAL*0.7,smoothstep(0.15,0.85,t));
   float h=smoothstep(0.36,0.5,t)*(1.0-smoothstep(0.5,0.62,t));
   s=mix(s,COL_AMBER,h*0.55);
-  float c=fbm(d*3.0+vec3(iTime*0.02,0,0));
+  float c=fbm(d*3.0+vec3(iTime*0.02,0.0,0.0));
   s=mix(s,COL_DARK,smoothstep(0.55,0.8,c)*0.35);
   return s;}
 vec3 safeR(vec3 I,vec3 N,float e){vec3 r=refract(I,N,e);if(dot(r,r)<1e-4)r=reflect(I,N);return r;}
 void main(){
   vec2 p=uv;
-  vec3 ro=vec3(0,0,5);
+  vec3 ro=vec3(0.0,0.0,5.0);
   vec3 rd=normalize(vec3((p-0.5)*1.6,-1.6));
   float t=0.0;bool hit=false;
   for(int i=0;i<32;i++){vec3 pos=ro+rd*t;float d=scene(pos);if(d<0.001){hit=true;break;}t+=d;if(t>20.0)break;}
