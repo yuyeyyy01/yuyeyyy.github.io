@@ -183,11 +183,13 @@ async function renderPost(env: CloudflareEnv, url: URL, slug: string): Promise<R
   // 预处理 MDX 自定义组件 → HTML
   const processedMd = preprocessMdx(post.content_md || "");
 
-  // markdown → HTML
-  const contentHtml = await marked.parse(processedMd, {
-    gfm: true,
-    breaks: false,
-  });
+  // markdown → HTML（占位符在 marked 解析后还原，避免 <script> IIFE 空行被 marked 插 <p>）
+  const contentHtml = restoreWebglBlocks(
+    await marked.parse(processedMd, {
+      gfm: true,
+      breaks: false,
+    }),
+  );
 
   const fmtDate = formatDate(post.date);
 
@@ -346,6 +348,12 @@ async function htmlResponse(
 // MDX 组件预处理 —— 转成纯 HTML
 // ---------------------------------------------------------------------------
 
+// 已展开的 HTML 块占位符表：preprocessMdx 先把组件替换成唯一占位符（HTML 注释形式，
+// marked 不会解析注释内部），marked 解析剩余 markdown 后再还原成真 HTML。
+// 这样避免 renderXxxHTML 返回的 <script> IIFE 里的空行被 marked 当段落分隔插入 <p>，
+// 导致 script 内容被劈开（线上曾出现 var meshKind="octahedron";<p> try { 的 SyntaxError）。
+const WEBGL_BLOCK_PLACEHOLDERS: string[] = [];
+
 function preprocessMdx(md: string): string {
   let result = md;
 
@@ -353,12 +361,19 @@ function preprocessMdx(md: string): string {
   let canvasSeq = 0;
   const nextId = () => "ssr-demo-" + (++canvasSeq);
 
+  // 把一段 HTML 块存进占位符表，返回唯一占位符（HTML 注释，marked 原样保留）
+  const stash = (html: string): string => {
+    const i = WEBGL_BLOCK_PLACEHOLDERS.length;
+    WEBGL_BLOCK_PLACEHOLDERS.push(html);
+    return `<!--webgl-block-${i}-->`;
+  };
+
   // <Video bilibili="xxx" caption="yyy" /> → iframe
   result = result.replace(
     /<Video\s+bilibili="([^"]+)"(?:\s+caption="([^"]*)")?\s*\/?>/g,
     (_, bvid, caption) => {
       const cap = caption ? `<p class="mt-2 text-center text-sm text-[var(--foreground-muted)]">${esc(caption)}</p>` : "";
-      return `<div class="my-6"><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:var(--radius-xl)"><iframe src="//player.bilibili.com/player.html?bvid=${esc(bvid)}&high_quality=1&autoplay=0" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allowfullscreen allow="fullscreen"></iframe></div>${cap}</div>`;
+      return stash(`<div class="my-6"><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:var(--radius-xl)"><iframe src="//player.bilibili.com/player.html?bvid=${esc(bvid)}&high_quality=1&autoplay=0" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allowfullscreen allow="fullscreen"></iframe></div>${cap}</div>`);
     },
   );
 
@@ -366,7 +381,7 @@ function preprocessMdx(md: string): string {
     /<Video\s+youtube="([^"]+)"(?:\s+caption="([^"]*)")?\s*\/?>/g,
     (_, vid, caption) => {
       const cap = caption ? `<p class="mt-2 text-center text-sm text-[var(--foreground-muted)]">${esc(caption)}</p>` : "";
-      return `<div class="my-6"><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:var(--radius-xl)"><iframe src="https://www.youtube.com/embed/${esc(vid)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allowfullscreen allow="fullscreen"></iframe></div>${cap}</div>`;
+      return stash(`<div class="my-6"><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:var(--radius-xl)"><iframe src="https://www.youtube.com/embed/${esc(vid)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allowfullscreen allow="fullscreen"></iframe></div>${cap}</div>`);
     },
   );
 
@@ -374,25 +389,25 @@ function preprocessMdx(md: string): string {
   // children 是 r3f mesh 语法，vanilla 不支持，统一用 icosahedron 暗示自定义 mesh
   result = result.replace(
     /<Scene>[\s\S]*?<\/Scene>/g,
-    () => renderSceneHTML({ canvasId: nextId(), height: 320, mesh: 'icosahedron' }),
+    () => stash(renderSceneHTML({ canvasId: nextId(), height: 320, mesh: 'icosahedron' })),
   );
 
   // <Scene autoRotate /> → vanilla WebGL octahedron mesh + 自动旋转
   result = result.replace(
     /<Scene\s+autoRotate\s*\/>/g,
-    () => renderSceneHTML({ canvasId: nextId(), height: 320, autoRotate: true, mesh: 'octahedron' }),
+    () => stash(renderSceneHTML({ canvasId: nextId(), height: 320, autoRotate: true, mesh: 'octahedron' })),
   );
 
   // <Scene /> → vanilla WebGL octahedron mesh（静态）
   result = result.replace(
     /<Scene\s*\/>/g,
-    () => renderSceneHTML({ canvasId: nextId(), height: 320, autoRotate: false, mesh: 'octahedron' }),
+    () => stash(renderSceneHTML({ canvasId: nextId(), height: 320, autoRotate: false, mesh: 'octahedron' })),
   );
 
   // <ShaderDemo /> → vanilla WebGL shader demo（全屏 triangle + UV 渐变）
   result = result.replace(
     /<ShaderDemo\s*\/>/g,
-    () => renderShaderHTML({ demoId: 'shader-demo', canvasId: nextId(), height: 320 }),
+    () => stash(renderShaderHTML({ demoId: 'shader-demo', canvasId: nextId(), height: 320 })),
   );
 
   // <PlaygroundPBR /> → shader + 控件（共用同一 canvasId，让控件 dispatch 的 uniform-change 事件能被 shader IIFE 接收）
@@ -400,7 +415,7 @@ function preprocessMdx(md: string): string {
     /<PlaygroundPBR\s*\/>/g,
     () => {
       const id = nextId();
-      return renderShaderHTML({ demoId: 'pbr', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.pbr.uniforms });
+      return stash(renderShaderHTML({ demoId: 'pbr', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.pbr.uniforms }));
     },
   );
 
@@ -409,7 +424,7 @@ function preprocessMdx(md: string): string {
     /<PlaygroundSSS\s*\/>/g,
     () => {
       const id = nextId();
-      return renderShaderHTML({ demoId: 'sss', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.sss.uniforms });
+      return stash(renderShaderHTML({ demoId: 'sss', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.sss.uniforms }));
     },
   );
 
@@ -418,7 +433,7 @@ function preprocessMdx(md: string): string {
     /<PlaygroundHair\s*\/>/g,
     () => {
       const id = nextId();
-      return renderShaderHTML({ demoId: 'hair', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.hair.uniforms });
+      return stash(renderShaderHTML({ demoId: 'hair', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.hair.uniforms }));
     },
   );
 
@@ -427,11 +442,22 @@ function preprocessMdx(md: string): string {
     /<Figure\s+src="([^"]+)"(?:\s+alt="([^"]*)")?(?:\s+caption="([^"]*)")?\s*\/?>/g,
     (_, src, alt, caption) => {
       const cap = caption ? `<p class="mt-2 text-center text-sm text-[var(--foreground-muted)]">${esc(caption)}</p>` : "";
-      return `<figure class="my-6"><img src="${esc(src)}" alt="${esc(alt || "")}" style="border-radius:var(--radius-xl);max-width:100%" />${cap}</figure>`;
+      return stash(`<figure class="my-6"><img src="${esc(src)}" alt="${esc(alt || "")}" style="border-radius:var(--radius-xl);max-width:100%" />${cap}</figure>`);
     },
   );
 
   return result;
+}
+
+// 还原占位符：marked 解析后，把 <!--webgl-block-N--> 替换回真实 HTML 块。
+// 清空占位符表以便下一篇复用（renderPost 每次调用 preprocessMdx 后会调用此函数）。
+function restoreWebglBlocks(html: string): string {
+  let out = html;
+  for (let i = 0; i < WEBGL_BLOCK_PLACEHOLDERS.length; i++) {
+    out = out.split(`<!--webgl-block-${i}-->`).join(WEBGL_BLOCK_PLACEHOLDERS[i]);
+  }
+  WEBGL_BLOCK_PLACEHOLDERS.length = 0;
+  return out;
 }
 
 // ---------------------------------------------------------------------------
