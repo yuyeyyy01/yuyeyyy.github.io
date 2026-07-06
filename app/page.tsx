@@ -2,8 +2,6 @@
 
 import Hero from "@/components/Hero";
 import ArticleCard, { type ArticleCardProps } from "@/components/ArticleCard";
-import ProjectCard from "@/components/ProjectCard";
-import { LAB_DEMOS } from "@/components/lab/demos";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -40,10 +38,6 @@ const RECENT_ARTICLES: ArticleCardProps[] = [
       "为什么用两条 Kajiya 高光来近似 Marschner，多分支高光在头发体积感中的作用是什么。",
   },
 ];
-
-// 首页 § Experiments 直接复用 /lab 的 demo：跳转到对应 /lab/[slug] 详情页，
-// 把首页流量导进作品集，避免维护两套 project 列表。取前 3 个。
-const FEATURED_LABS = LAB_DEMOS.slice(0, 3);
 
 /**
  * section 标签行：framegraph pass 风格——§ Name + 细线延伸。
@@ -88,59 +82,6 @@ export default function Home() {
           {RECENT_ARTICLES.map((a) => (
             <ArticleCard key={a.slug} {...a} entryVariant={staggerItem} />
           ))}
-        </motion.div>
-      </section>
-
-      {/* 渲染实验 */}
-      <section id="projects" className="container-page scroll-mt-20 py-20 md:py-28">
-        <SectionLabel>§ Experiments</SectionLabel>
-        <motion.header
-          variants={fadeUp}
-          {...whileInViewConfig}
-          viewport={{ once: true, margin: "-60px" }}
-          className="mt-5 max-w-2xl"
-        >
-          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-            一些渲染实验
-          </h2>
-          <p className="mt-4 text-base leading-relaxed text-[var(--foreground-soft)]">
-            正在开发或已完成的效果 Demo，未来会陆续整理成文章和开源仓库。
-          </p>
-        </motion.header>
-
-        <motion.div
-          variants={staggerContainer}
-          {...whileInViewConfig}
-          viewport={{ once: true, margin: "-60px" }}
-          className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3"
-        >
-          {FEATURED_LABS.map((d) => (
-            <ProjectCard
-              key={d.slug}
-              title={d.title}
-              description={d.description}
-              href={`/lab/${d.slug}/`}
-              shader={d.miniFragment}
-              shaderLabel={d.slug}
-              entryVariant={staggerItem}
-            />
-          ))}
-        </motion.div>
-
-        {/* 查看全部实验室入口 */}
-        <motion.div
-          variants={fadeUp}
-          {...whileInViewConfig}
-          viewport={{ once: true, margin: "-60px" }}
-          className="mt-8"
-        >
-          <Link
-            href="/lab/"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] transition-opacity hover:opacity-80"
-          >
-            查看全部实验室
-            <ArrowRight size={16} className="-translate-y-px" />
-          </Link>
         </motion.div>
       </section>
 
