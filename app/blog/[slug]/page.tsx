@@ -20,8 +20,8 @@ import ReadingProgress from "@/components/ReadingProgress";
 import TableOfContents from "@/components/TableOfContents";
 import CodeBlockEnhancer from "@/components/CodeBlockEnhancer";
 import Comments from "@/components/Comments";
-import Scene from "@/components/Scene";
-import ShaderDemo from "@/components/ShaderDemo";
+import SceneLazy from "@/components/SceneLazy";
+import ShaderDemoLazy from "@/components/ShaderDemoLazy";
 import { PlaygroundPBR, PlaygroundSSS, PlaygroundHair } from "@/components/PlaygroundPresets";
 import PBRPlayground from "@/components/PBRPlayground";
 import Figure from "@/components/Figure";
@@ -123,8 +123,8 @@ export default async function PostPage({ params }: PageProps) {
                   },
                 }}
                 components={{
-                  Scene,
-                  ShaderDemo,
+                  Scene: SceneLazy,
+                  ShaderDemo: ShaderDemoLazy,
                   PlaygroundPBR,
                   PlaygroundSSS,
                   PlaygroundHair,
