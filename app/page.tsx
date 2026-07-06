@@ -2,8 +2,8 @@
 
 import Hero from "@/components/Hero";
 import ArticleCard, { type ArticleCardProps } from "@/components/ArticleCard";
-import ProjectCard, { type ProjectCardProps } from "@/components/ProjectCard";
-import { SUNSET_FRAG, PORTAL_FRAG, WATER_FRAG } from "@/components/project-shaders";
+import ProjectCard from "@/components/ProjectCard";
+import { LAB_DEMOS } from "@/components/lab/demos";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -41,32 +41,9 @@ const RECENT_ARTICLES: ArticleCardProps[] = [
   },
 ];
 
-const RENDER_PROJECTS: ProjectCardProps[] = [
-  {
-    title: "Tequila Sunset 动态天空盒",
-    description:
-      "仿《极乐迪斯科》的龙舌兰日落风格天空，带大气散射、日夜循环和体积云雾的尝试。",
-    href: "https://github.com/yuyeyyy",
-    shader: SUNSET_FRAG,
-    shaderLabel: "sky",
-  },
-  {
-    title: "Inception 风格 Portal",
-    description:
-      "使用 URP ScriptableRendererFeature 实现的多相机 Portal，支持折射、边缘 FX 和多层嵌套。",
-    href: "https://github.com/yuyeyyy",
-    shader: PORTAL_FRAG,
-    shaderLabel: "portal",
-  },
-  {
-    title: "水体 & 草地交互",
-    description:
-      "通过深度、法线与顶点动画实现风动草地和角色交互波纹，兼顾移动端性能优化。",
-    href: "https://github.com/yuyeyyy",
-    shader: WATER_FRAG,
-    shaderLabel: "water",
-  },
-];
+// 首页 § Experiments 直接复用 /lab 的 demo：跳转到对应 /lab/[slug] 详情页，
+// 把首页流量导进作品集，避免维护两套 project 列表。取前 3 个。
+const FEATURED_LABS = LAB_DEMOS.slice(0, 3);
 
 /**
  * section 标签行：framegraph pass 风格——§ Name + 细线延伸。
@@ -137,9 +114,33 @@ export default function Home() {
           viewport={{ once: true, margin: "-60px" }}
           className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3"
         >
-          {RENDER_PROJECTS.map((p) => (
-            <ProjectCard key={p.title} {...p} entryVariant={staggerItem} />
+          {FEATURED_LABS.map((d) => (
+            <ProjectCard
+              key={d.slug}
+              title={d.title}
+              description={d.description}
+              href={`/lab/${d.slug}/`}
+              shader={d.miniFragment}
+              shaderLabel={d.slug}
+              entryVariant={staggerItem}
+            />
           ))}
+        </motion.div>
+
+        {/* 查看全部实验室入口 */}
+        <motion.div
+          variants={fadeUp}
+          {...whileInViewConfig}
+          viewport={{ once: true, margin: "-60px" }}
+          className="mt-8"
+        >
+          <Link
+            href="/lab/"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--accent)] transition-opacity hover:opacity-80"
+          >
+            查看全部实验室
+            <ArrowRight size={16} className="-translate-y-px" />
+          </Link>
         </motion.div>
       </section>
 
