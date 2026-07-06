@@ -114,8 +114,8 @@ export default function Hero() {
             <ArrowRight size={15} className="-translate-y-px" />
           </Link>
           <Link
-            href="#projects"
-            onClick={(e) => handleAnchorClick(e, "#projects")}
+            href="#featured"
+            onClick={(e) => handleAnchorClick(e, "#featured")}
             className="btn-secondary inline-flex items-center px-5 py-2.5 text-sm"
           >
             看看效果
@@ -142,8 +142,8 @@ export default function Hero() {
 
       {/* 滚动提示：底部小箭头 + 文字缓慢浮动，引导向下 */}
       <motion.a
-        href="#projects"
-        onClick={(e) => handleAnchorClick(e, "#projects")}
+        href="#featured"
+        onClick={(e) => handleAnchorClick(e, "#featured")}
         aria-label="向下滚动查看更多"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

@@ -31,7 +31,7 @@ export default function FeaturedLab() {
   );
 
   return (
-    <section className="container-page py-20 md:py-28">
+    <section id="featured" className="container-page scroll-mt-20 py-20 md:py-28">
       {/* 顶部 accent 线 + § 标签：framegraph pass 节点风 */}
       <div
         aria-hidden
