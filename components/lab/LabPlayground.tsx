@@ -99,7 +99,13 @@ export default function LabPlayground({
 
     const isSphere = mesh === "sphere";
     const vs = compile(gl, gl.VERTEX_SHADER, isSphere ? SPHERE_VERT : FULLSCREEN_VERT);
-    const fs = compile(gl, gl.FRAGMENT_SHADER, fragment);
+    // 移动端注入低步数宏，降 GPU 负载。demo fragment 用 RAYMARCH_STEPS / REFLECT_STEPS 替代硬编码。
+    const mobile = window.matchMedia("(max-width: 768px)").matches || (navigator.hardwareConcurrency || 8) <= 4;
+    const inject = mobile
+      ? "#define RAYMARCH_STEPS 32\n#define REFLECT_STEPS 32\n"
+      : "#define RAYMARCH_STEPS 64\n#define REFLECT_STEPS 64\n";
+    const fragSrc = fragment.replace("#version 300 es", "#version 300 es\n" + inject);
+    const fs = compile(gl, gl.FRAGMENT_SHADER, fragSrc);
     if (!vs || !fs) return;
     const prog = gl.createProgram()!;
     gl.attachShader(prog, vs);
@@ -181,7 +187,7 @@ export default function LabPlayground({
     const reduced = mql.matches;
     let raf = 0;
     let disposed = false;
-    const t0 = performance.now();
+    let t0 = performance.now();
 
     function setUniforms(t: number) {
       if (uniRef.current.iTime) gl.uniform1f(uniRef.current.iTime, t);
@@ -227,14 +233,39 @@ export default function LabPlayground({
       draw(t);
     }
 
-    // 先画一帧
+    // 先画一帧（无论是否 reduced / 在视口内）
     draw(0);
-    if (!reduced) frame();
+
+    // reduced-motion：只画首帧静态，不开 raf
+    // 视口外：暂停 raf 省电；回到视口恢复（重置 t0 避免时间跳变）
+    let io: IntersectionObserver | null = null;
+    if (!reduced) {
+      io = new IntersectionObserver(
+        (entries) => {
+          if (disposed) return;
+          const inView = entries[0].isIntersecting;
+          if (inView) {
+            if (!raf) {
+              t0 = performance.now();
+              frame();
+            }
+          } else {
+            if (raf) {
+              cancelAnimationFrame(raf);
+              raf = 0;
+            }
+          }
+        },
+        { threshold: 0 },
+      );
+      io.observe(canvas);
+    }
 
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
       ro.disconnect();
+      io?.disconnect();
       gl.deleteProgram(prog);
       gl.deleteShader(vs);
       gl.deleteShader(fs);

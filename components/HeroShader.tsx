@@ -123,8 +123,10 @@ export default function HeroShader({ mouseRef }: HeroShaderProps) {
 
     function resize() {
       if (!canvas) return;
+      // 半分辨率渲染：体积云是低频平滑渐变，半分辨率几乎无损，
+      // GPU 像素数降到 1/4。移动端 0.75 平衡清晰度与性能。
       const mobile = window.matchMedia("(max-width: 768px)").matches;
-      const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
+      const dpr = mobile ? 0.75 : 0.5;
       const w = Math.max(1, Math.floor(canvas.clientWidth * dpr));
       const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
       if (canvas.width !== w || canvas.height !== h) {

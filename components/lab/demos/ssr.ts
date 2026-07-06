@@ -75,7 +75,7 @@ void main() {
 
   float t = 0.0;
   bool hit = false;
-  for (int i = 0; i < 80; i++) {
+  for (int i = 0; i < RAYMARCH_STEPS; i++) {
     vec3 pos = ro + rd * t;
     float d = sceneSDF(pos);
     if (d < 0.001) { hit = true; break; }
@@ -95,7 +95,7 @@ void main() {
       float rt = 0.02;
       bool rhit = false;
       vec3 rp = pos;
-      for (int i = 0; i < 64; i++) {
+      for (int i = 0; i < REFLECT_STEPS; i++) {
         rp = pos + r * rt;
         float d = sceneSDF(rp);
         if (d < 0.001) { rhit = true; break; }

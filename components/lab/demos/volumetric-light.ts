@@ -83,7 +83,7 @@ void main() {
   float t = 0.0;
   vec3 col = vec3(0.0);
   float trans = 1.0;
-  for (int i = 0; i < 64; i++) {
+  for (int i = 0; i < RAYMARCH_STEPS; i++) {
     vec3 pos = ro + rd * t;
     float n = fbm(pos * 1.5 + vec3(0.0, 0.0, iTime * 0.05));
     float dens = max(n - 0.45, 0.0) * u_density * 2.0;

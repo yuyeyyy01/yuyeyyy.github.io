@@ -42,9 +42,8 @@ export default function MiniShader({ fragment, label, className }: MiniShaderPro
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // reduced-motion：不渲染动画，只留静态 canvas
     const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mql.matches) return;
+    const reduced = mql.matches;
 
     const glCtx = canvas.getContext("webgl2", {
       antialias: false,
@@ -114,7 +113,7 @@ export default function MiniShader({ fragment, label, className }: MiniShaderPro
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
-    const t0 = performance.now();
+    let t0 = performance.now();
     function frame() {
       if (disposed) return;
       raf = requestAnimationFrame(frame);
@@ -125,12 +124,43 @@ export default function MiniShader({ fragment, label, className }: MiniShaderPro
       gl.clear(gl.COLOR_BUFFER_BIT);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     }
-    frame();
+    // 先画一帧（reduced-motion 下也是唯一一帧）
+    gl.uniform1f(uTime, 0);
+    gl.uniform2f(uRes, canvas.width, canvas.height);
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // reduced-motion：只画首帧静态，不开 raf
+    // 视口外：暂停 raf 省电；回到视口恢复（重置 t0 避免时间跳变）
+    let io: IntersectionObserver | null = null;
+    if (!reduced) {
+      io = new IntersectionObserver(
+        (entries) => {
+          if (disposed) return;
+          const inView = entries[0].isIntersecting;
+          if (inView) {
+            if (!raf) {
+              t0 = performance.now();
+              frame();
+            }
+          } else {
+            if (raf) {
+              cancelAnimationFrame(raf);
+              raf = 0;
+            }
+          }
+        },
+        { threshold: 0 },
+      );
+      io.observe(canvas);
+    }
 
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
       ro.disconnect();
+      io?.disconnect();
       gl.deleteProgram(prog);
       gl.deleteShader(vs);
       gl.deleteShader(fs);
