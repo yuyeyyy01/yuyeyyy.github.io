@@ -314,19 +314,12 @@ a {
 pre {
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-top: none; /* 顶部由 enhancer 的 accent 线收口 */
-  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  border-radius: var(--radius-xl);
   padding: 1rem 1.25rem 1.25rem;
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 0.85rem;
   line-height: 1.65;
-}
-/* 没有 enhancer 包装的裸 pre（如 SSR fallback）保留完整边框 */
-:not([data-cbe-wrapper]) > pre {
-  border-top: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding-top: 1rem;
 }
 code {
   font-family: var(--font-mono);
