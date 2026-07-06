@@ -15,8 +15,13 @@ type UniformValue = number | [number, number, number];
 export default function LabDemoView({ demo }: { demo: LabDemo }) {
   const [values, setValues] = useState<Record<string, UniformValue>>(() => ({ ...demo.defaults }));
 
+  // 滑块改值：更新 state，LabPlayground 通过 values prop 同步到 uniform
   const onChange = (name: string, v: UniformValue) => {
     setValues((prev) => ({ ...prev, [name]: v }));
+  };
+  // LabPlayground 内部预设按钮触发，接收完整 values
+  const onValuesChange = (next: Record<string, UniformValue>) => {
+    setValues(next);
   };
 
   return (
@@ -29,6 +34,8 @@ export default function LabDemoView({ demo }: { demo: LabDemo }) {
           uniforms={demo.uniforms}
           defaults={demo.defaults}
           presets={demo.presets}
+          values={values}
+          onValuesChange={onValuesChange}
         />
       </div>
 

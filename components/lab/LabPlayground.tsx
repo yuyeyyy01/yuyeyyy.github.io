@@ -21,6 +21,10 @@ export interface LabPlaygroundProps {
   uniforms: LabUniform[];
   defaults: Record<string, number | [number, number, number]>;
   presets?: Record<string, Record<string, number | [number, number, number]>>;
+  /** 外部受控值（如 LabDemoView 传入）。传入时以它为准同步到 uniform。 */
+  values?: Record<string, number | [number, number, number]>;
+  /** 外部滑块改值回调。内部预设按钮也会触发它，保持单一数据源。 */
+  onValuesChange?: (v: Record<string, number | [number, number, number]>) => void;
   allowDrag?: boolean;
   autoRotate?: boolean;
   height?: number;
@@ -69,6 +73,8 @@ export default function LabPlayground({
   uniforms,
   defaults,
   presets,
+  values: controlledValues,
+  onValuesChange,
   allowDrag,
   autoRotate = false,
   height = 70,
@@ -78,7 +84,9 @@ export default function LabPlayground({
   const uniRef = useRef<Record<string, WebGLUniformLocation | null>>({});
   const yawPitch = useRef<[number, number]>([0.3, 0.2]);
   const drag = useRef<{ x: number; y: number } | null>(null);
-  const [values, setValues] = useState<Record<string, UniformValue>>(() => ({ ...defaults }));
+  // 受控/非受控：外部传 values 用外部的，否则内部 state
+  const [internalValues, setInternalValues] = useState<Record<string, UniformValue>>(() => ({ ...defaults }));
+  const values = controlledValues ?? internalValues;
   const valuesRef = useRef<Record<string, UniformValue>>(values);
   const autoRotateRef = useRef(autoRotate);
   const [activePreset, setActivePreset] = useState<string | null>(null);
@@ -86,6 +94,7 @@ export default function LabPlayground({
   const dragEnabled = allowDrag ?? (mesh === "sphere");
 
   useEffect(() => { autoRotateRef.current = autoRotate; }, [autoRotate]);
+  // 同步 values 到 ref（raf 每帧读 ref 传 GPU）
   useEffect(() => { valuesRef.current = values; }, [values]);
 
   // ---- 一次性初始化：编译 shader + 上传 mesh + raf ----
@@ -278,8 +287,10 @@ export default function LabPlayground({
 
   // ---- 滑块改值：state + ref 同步，不重编译 ----
   const onChange = (name: string, v: UniformValue) => {
-    setValues((prev) => ({ ...prev, [name]: v }));
-    valuesRef.current = { ...valuesRef.current, [name]: v };
+    const next = { ...values, [name]: v };
+    if (onValuesChange) onValuesChange(next);
+    setInternalValues(next);
+    valuesRef.current = next;
     setActivePreset(null);
   };
 
@@ -287,7 +298,8 @@ export default function LabPlayground({
     const p = presets?.[name];
     if (!p) return;
     const next = { ...values, ...p };
-    setValues(next);
+    if (onValuesChange) onValuesChange(next);
+    setInternalValues(next);
     valuesRef.current = next;
     setActivePreset(name);
   };
