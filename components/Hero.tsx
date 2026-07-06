@@ -1,36 +1,41 @@
 "use client";
 
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import avatarImg from "@/public/assets/me.png";
 import { staggerContainer, staggerItem, easeOut, DUR } from "@/lib/motion";
 import FrameIndicator from "@/components/FrameIndicator";
+import HeroShader from "@/components/HeroShader";
 
 /**
- * 首页 Hero 区：左对齐编辑式布局（非居中三件套）。
- * 右上角 signature = FrameIndicator（LUT 条 + frame 计数），渲染调试语言。
- * 标题中文宋体（出版物气质），英文 eyebrow 用 mono（代码气质）。
+ * 首页 Hero 区：全屏交互式体积云 shader 背景 + 文字叠加。
  *
- * 克制动效：鼠标微视差（头像/标题按不同系数偏移几像素）。
- * 删掉了旧的背景光晕层与滚动视差（廉价感来源）。
+ * 布局：section min-h-screen，HeroShader 作背景层（z-0），
+ * 遮罩层（z-10）三层渐变让文字可读，文字层 z-20。
+ * FrameIndicator 移到左上角（渲染调试语言）。
+ *
+ * 鼠标交互：pointermove 写 mouseRef（归一化 0-1，左下原点），
+ * 不进 React state，直接被 HeroShader 每帧读取作光源方向。
+ *
+ * 克制动效：保留 staggerContainer/staggerItem 入场，删旧鼠标微视差。
  */
 export default function Hero() {
-  // ---- 鼠标微视差：归一化到 [-1, 1]，再乘以各自系数 ----
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const sx = useSpring(mx, { stiffness: 120, damping: 18, mass: 0.3 });
-  const sy = useSpring(my, { stiffness: 120, damping: 18, mass: 0.3 });
+  // 鼠标位置归一化 0-1（左下原点），ref 不触发重渲染
+  const mouseRef = useRef<[number, number]>([0.5, 0.6]);
 
   function handlePointerMove(e: React.PointerEvent<HTMLElement>) {
     const { innerWidth, innerHeight } = window;
-    mx.set((e.clientX / innerWidth - 0.5) * 2);
-    my.set((e.clientY / innerHeight - 0.5) * 2);
+    mouseRef.current = [
+      e.clientX / innerWidth,
+      1 - e.clientY / innerHeight, // 转左下原点
+    ];
   }
+
   function handlePointerLeave() {
-    mx.set(0);
-    my.set(0);
+    mouseRef.current = [0.5, 0.6];
   }
 
   // 锚点跳转：程序化平滑滚动，不依赖全局 scroll-behavior
@@ -44,28 +49,38 @@ export default function Hero() {
     }
   }
 
-  // 各层位移：标题系数最大，副标题更小
-  const titleX = useTransform(sx, [-1, 1], [-4, 4]);
-  const titleY = useTransform(sy, [-1, 1], [-4, 4]);
-  const subX = useTransform(sx, [-1, 1], [-2, 2]);
-  const subY = useTransform(sy, [-1, 1], [-2, 2]);
-
   return (
     <section
-      className="container-page relative py-24 md:py-32"
+      className="relative flex min-h-screen flex-col justify-end overflow-hidden"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
     >
-      {/* signature：右上角渲染状态指示器 */}
-      <div className="absolute right-4 top-20 md:right-8 md:top-24">
+      {/* 背景层：体积云 shader */}
+      <HeroShader mouseRef={mouseRef} />
+
+      {/* 遮罩层：三层渐变让文字可读 */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-10"
+        style={{
+          background:
+            "linear-gradient(to top, var(--background) 0%, transparent 45%)," +
+            "linear-gradient(to right, var(--background) 0%, transparent 50%)," +
+            "linear-gradient(to top, transparent 70%, rgba(7,7,8,0.6) 100%)",
+        }}
+      />
+
+      {/* signature：左上角渲染状态指示器 */}
+      <div className="absolute left-4 top-6 z-20 md:left-8">
         <FrameIndicator />
       </div>
 
+      {/* 文字层 */}
       <motion.div
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
-        className="relative max-w-3xl"
+        className="container-page relative z-20 pb-20 pt-32"
       >
         {/* eyebrow：英文 mono，渲染管线标签风 */}
         <motion.p
@@ -79,8 +94,7 @@ export default function Hero() {
             末尾的句号是刻意的视觉锚点，像代码行尾的标点。 */}
         <motion.h1
           variants={staggerItem}
-          style={{ x: titleX, y: titleY }}
-          className="mt-6 font-[family-name:var(--font-mono)] text-5xl font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--foreground)] md:text-7xl"
+          className="mt-6 font-[family-name:var(--font-mono)] text-5xl font-semibold leading-[1.1] tracking-[-0.03em] text-[var(--foreground)] md:text-8xl"
         >
           Render Notes.
         </motion.h1>
@@ -88,7 +102,6 @@ export default function Hero() {
         {/* 副标题 */}
         <motion.p
           variants={staggerItem}
-          style={{ x: subX, y: subY }}
           className="mt-6 max-w-xl text-base leading-relaxed text-[var(--foreground-soft)] md:text-lg"
         >
           在做 Unity / URP 渲染与 Shader 开发。这里记录 PBR、皮肤与头发渲染、Portal、水体、体积光的折腾笔记。
@@ -135,7 +148,7 @@ export default function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.1, duration: DUR.slow, ease: easeOut }}
-        className="absolute inset-x-0 bottom-6 mx-auto flex w-fit flex-col items-center gap-1 text-[var(--foreground-muted)] transition-opacity duration-300 hover:text-[var(--foreground-soft)]"
+        className="absolute inset-x-0 bottom-6 z-20 mx-auto flex w-fit flex-col items-center gap-1 text-[var(--foreground-muted)] transition-opacity duration-300 hover:text-[var(--foreground-soft)]"
       >
         <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em]">向下探索</span>
         <ChevronDown size={16} aria-hidden className="hero-scroll-cue" />
