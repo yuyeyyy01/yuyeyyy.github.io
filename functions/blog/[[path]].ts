@@ -8,11 +8,16 @@
  */
 
 import { marked } from "marked";
+import markedKatex from "marked-katex-extension";
 import type { CloudflareEnv } from "../_lib";
 import { renderShaderHTML } from "../../components/webgl-demos/inline-renderer";
 import { renderSceneHTML } from "../../components/webgl-demos/scene-mesh";
 import { renderControlsHTML } from "../../components/webgl-demos/controls-html";
 import { DEMOS } from "../../components/webgl-demos/shaders";
+
+// marked 挂载 KaTeX 数学公式扩展：$...$ 行内、$$...$$ 块级 → KaTeX HTML
+// 静态导出版（app/blog/[slug]）用 remarkMath + rehypeKatex，SSR 版用此扩展对齐。
+marked.use(markedKatex({ throwOnError: false }));
 
 interface PostRow {
   slug: string;
@@ -247,7 +252,7 @@ async function htmlResponse(
   description: string,
   bodyContent: string,
 ): Promise<Response> {
-  // 从现有静态页面提取 <head> 中的 CSS 引用
+  // 从现有静态页面提取 <head> 中的 CSS 引用（含 KaTeX 全局 CSS，已在 app/layout 注入）
   let cssLinks = "";
   try {
     const templateReq = new Request(new URL("/about/", url.origin).toString());

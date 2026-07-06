@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
+// KaTeX 全局 CSS：让所有静态页（含 /about/）都带 katex 样式，
+// Edge SSR（functions/blog）从 /about/ 提取 CSS 时也能拿到，文章公式有样式。
+import "katex/dist/katex.min.css";
 import ThemeProvider from "@/components/theme-provider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
