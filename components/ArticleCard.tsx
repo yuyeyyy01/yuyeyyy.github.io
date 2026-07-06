@@ -48,27 +48,22 @@ export default function ArticleCard({
     >
       <motion.article
         {...entryProps}
-        className="card flex h-full flex-col p-6 transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:border-[var(--border-strong)] group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+        className="card flex h-full flex-col p-5 transition-all duration-300 ease-out group-hover:border-[var(--accent)] group-hover:-translate-y-0.5"
       >
-        {/* 顶部元信息：日期 · 分类 */}
-        <div className="flex items-center gap-2">
+        {/* 顶部元信息：日期 · 分类（mono，材质属性面板 key 行风） */}
+        <div className="flex items-center gap-2 font-mono text-[0.7rem]">
           <time
             dateTime={date}
-            className="font-mono text-xs text-[var(--foreground-muted)]"
+            className="text-[var(--foreground-muted)]"
           >
             {date}
           </time>
-          <span
-            aria-hidden
-            className="text-xs text-[var(--foreground-muted)]"
-          >
-            ·
-          </span>
-          <span className="text-xs text-[var(--accent)]">{category}</span>
+          <span aria-hidden className="text-[var(--foreground-muted)]">·</span>
+          <span className="text-[var(--accent)]">{category}</span>
         </div>
 
-        {/* 标题 */}
-        <h3 className="mt-3 text-lg font-medium leading-snug text-[var(--foreground)]">
+        {/* 标题：宋体，与 Hero 标题同体系 */}
+        <h3 className="mt-3 font-[family-name:var(--font-serif)] text-lg font-semibold leading-snug text-[var(--foreground)]">
           {title}
         </h3>
 
@@ -78,10 +73,10 @@ export default function ArticleCard({
         </p>
 
         {/* 底部：阅读 + 箭头，整卡 hover 时箭头滑出 */}
-        <div className="mt-auto flex items-center gap-1 pt-6 text-xs text-[var(--foreground-muted)] transition-colors duration-300 group-hover:text-[var(--accent)]">
+        <div className="mt-auto flex items-center gap-1 pt-6 font-mono text-[0.7rem] text-[var(--foreground-muted)] transition-colors duration-300 group-hover:text-[var(--accent)]">
           <span>阅读</span>
           <ArrowRight
-            size={14}
+            size={13}
             aria-hidden
             className="inline-flex transition-transform duration-300 ease-out group-hover:translate-x-1"
           />

@@ -24,10 +24,10 @@ export default function BlogPage() {
   return (
     <main className="container-page py-24 md:py-32">
       <header className="mb-12">
-        <p className="text-sm uppercase tracking-widest text-[var(--foreground-muted)]">
-          Writing
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--foreground-muted)]">
+          <span className="text-[var(--accent)]">§</span> Writing
         </p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)] md:text-5xl">
+        <h1 className="mt-4 font-[family-name:var(--font-serif)] text-4xl font-bold tracking-[-0.02em] text-[var(--foreground)] md:text-5xl">
           文章
         </h1>
         <p className="mt-4 text-[var(--foreground-soft)]">

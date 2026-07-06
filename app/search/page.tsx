@@ -136,10 +136,10 @@ export default function SearchPage() {
   return (
     <main className="container-page mx-auto max-w-2xl py-24 md:py-32">
       <header className="mb-12">
-        <p className="text-sm uppercase tracking-widest text-[var(--foreground-muted)]">
-          Search
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--foreground-muted)]">
+          <span className="text-[var(--accent)]">§</span> Search
         </p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-[var(--foreground)] md:text-5xl">
+        <h1 className="mt-4 font-[family-name:var(--font-serif)] text-4xl font-bold tracking-[-0.02em] text-[var(--foreground)] md:text-5xl">
           搜索
         </h1>
         <p className="mt-4 text-[var(--foreground-soft)]">
@@ -147,31 +147,37 @@ export default function SearchPage() {
         </p>
       </header>
 
-      {/* 搜索框 */}
-      <div className="relative">
-        <Search
+      {/* 搜索框 —— framegraph pass 节点风：小圆角 + 顶部 accent 线 */}
+      <div className="relative overflow-hidden rounded-[var(--radius-xl)] border border-[var(--border)] border-t-0 bg-[var(--surface)]">
+        <span
           aria-hidden
-          size={18}
-          className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[var(--foreground-muted)]"
+          className="absolute inset-x-0 top-0 h-0.5 bg-[var(--accent)] opacity-50"
         />
-        <input
-          ref={inputRef}
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="输入关键词…"
-          aria-label="搜索"
-          disabled={!ready}
-          className="w-full rounded-full border border-[var(--border-strong)] bg-[var(--surface)] py-3.5 pl-13 pr-12 text-[var(--foreground)] placeholder:text-[var(--foreground-muted)] transition-colors duration-200 focus:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ paddingLeft: "3.25rem" }}
-        />
-        {searching && (
-          <Loader2
+        <div className="relative">
+          <Search
             aria-hidden
             size={18}
-            className="absolute right-5 top-1/2 -translate-y-1/2 animate-spin text-[var(--foreground-muted)]"
+            className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[var(--foreground-muted)]"
           />
-        )}
+          <input
+            ref={inputRef}
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="输入关键词…"
+            aria-label="搜索"
+            disabled={!ready}
+            className="w-full rounded-b-[var(--radius-xl)] bg-transparent py-4 pr-12 text-[var(--foreground)] placeholder:text-[var(--foreground-muted)] transition-colors duration-200 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ paddingLeft: "3.25rem" }}
+          />
+          {searching && (
+            <Loader2
+              aria-hidden
+              size={18}
+              className="absolute right-5 top-1/2 -translate-y-1/2 animate-spin text-[var(--foreground-muted)]"
+            />
+          )}
+        </div>
       </div>
 
       {/* 状态区 */}
@@ -222,7 +228,7 @@ export default function SearchPage() {
               <motion.li key={r.id} variants={staggerItem}>
                 <Link
                   href={normalizeUrl(r.url)}
-                  className="card group block p-5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+                  className="card group block p-5 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-[var(--accent)]"
                 >
                   <h3 className="text-base font-medium leading-snug text-[var(--foreground)]">
                     {r.title}

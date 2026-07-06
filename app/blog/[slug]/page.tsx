@@ -80,21 +80,22 @@ export default async function PostPage({ params }: PageProps) {
           {/* 左侧：文章正文 */}
           <article className="min-w-0 max-w-2xl">
             <header className="mb-12">
-              <p className="text-sm uppercase tracking-widest text-[var(--foreground-muted)]">
-                {post.category}
+              {/* framegraph pass 标签风：§ category，与首页 § Latest 体系一致 */}
+              <p className="font-mono text-xs uppercase tracking-[0.18em] text-[var(--foreground-muted)]">
+                <span className="text-[var(--accent)]">§</span> {post.category}
               </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl">
+              <h1 className="mt-4 font-[family-name:var(--font-serif)] text-3xl font-bold leading-tight tracking-[-0.02em] text-[var(--foreground)] md:text-4xl">
                 {post.title}
               </h1>
-              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[var(--foreground-muted)]">
-                <time dateTime={post.date} className="font-mono">
+              <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs text-[var(--foreground-muted)]">
+                <time dateTime={post.date}>
                   {formatDate(post.date)}
                 </time>
                 <Link
                   href="/blog/"
                   className="inline-flex items-center gap-1.5 text-[var(--foreground-soft)] transition-colors hover:text-[var(--accent)]"
                 >
-                  <ArrowLeft className="h-4 w-4" />
+                  <ArrowLeft className="h-3.5 w-3.5" />
                   <span>返回文章</span>
                 </Link>
               </div>
@@ -180,31 +181,27 @@ function AdjacentCard({
   return (
     <Link
       href={`/blog/${slug}/`}
-      className="card group flex flex-col gap-2 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+      className="card group flex flex-col gap-2 p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[var(--accent)]"
     >
-      <div
-        className={
-          "flex items-center gap-1.5 text-xs text-[var(--foreground-muted)]"
-        }
-      >
+      <div className="flex items-center gap-1.5 font-mono text-[0.7rem] text-[var(--foreground-muted)]">
         {isPrev ? (
           <>
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft className="h-3 w-3" />
             <span>较新一篇</span>
           </>
         ) : (
           <>
             <span>较旧一篇</span>
-            <ArrowRight className="h-3.5 w-3.5" />
+            <ArrowRight className="h-3 w-3" />
           </>
         )}
       </div>
-      <p className="text-sm font-medium leading-snug text-[var(--foreground)] transition-colors duration-300 group-hover:text-[var(--accent)]">
+      <p className="font-[family-name:var(--font-serif)] text-sm font-semibold leading-snug text-[var(--foreground)] transition-colors duration-300 group-hover:text-[var(--accent)]">
         {title}
       </p>
       <time
         dateTime={date}
-        className="font-mono text-xs text-[var(--foreground-muted)]"
+        className="font-mono text-[0.7rem] text-[var(--foreground-muted)]"
       >
         {date}
       </time>

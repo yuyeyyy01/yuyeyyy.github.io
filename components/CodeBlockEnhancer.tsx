@@ -111,23 +111,32 @@ function getCodeText(pre: HTMLPreElement): string {
 
 function buildLangLabel(lang: string): HTMLSpanElement {
   const el = document.createElement("span");
+  // framegraph pass 标签风：§ lang，mono，前缀 § 用 accent 色
   el.textContent = lang;
   Object.assign(el.style, {
     position: "absolute",
     top: "0.5rem",
     left: "0.75rem",
     zIndex: "2",
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "0.3rem",
     fontSize: "11px",
     lineHeight: "1",
-    padding: "0.25rem 0.5rem",
-    borderRadius: "9999px",
+    padding: "0",
     color: "var(--foreground-muted)",
-    background: "var(--surface-2)",
-    border: "1px solid var(--border)",
+    background: "transparent",
+    border: "none",
     userSelect: "none",
     pointerEvents: "none",
     fontFamily: "var(--font-mono)",
+    letterSpacing: "0.02em",
   } as CSSStyleDeclaration);
+  // § 前缀用 accent 色点缀（像 signature 的 § FRAME）
+  const prefix = document.createElement("span");
+  prefix.textContent = "§";
+  prefix.style.color = "var(--accent)";
+  el.insertBefore(prefix, el.firstChild);
   return el;
 }
 
@@ -199,16 +208,30 @@ function enhance(pre: HTMLPreElement): void {
     wrapLines(code, language);
   }
 
-  // 包一层 wrapper，把标签和按钮放进去
+  // 包一层 wrapper，把标签和按钮放进去。framegraph pass 节点风：
+  // 顶部 2px accent 线（pass 入口标记）+ 顶部留白放 § lang 标签
   const parent = pre.parentNode;
   if (!parent) return;
   const wrapper = document.createElement("div");
   wrapper.setAttribute(WRAPPER_ATTR, "");
   Object.assign(wrapper.style, {
     position: "relative",
-    paddingTop: "2.25rem",
+    paddingTop: "2.5rem",
+  } as CSSStyleDeclaration);
+  // 顶部 accent 线：用 ::before 不好（inline style 无伪元素），改用真 DOM 节点
+  const passLine = document.createElement("span");
+  Object.assign(passLine.style, {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    right: "0",
+    height: "2px",
+    background: "var(--accent)",
+    opacity: "0.5",
+    pointerEvents: "none",
   } as CSSStyleDeclaration);
   parent.replaceChild(wrapper, pre);
+  wrapper.appendChild(passLine);
   wrapper.appendChild(pre);
 
   if (language) wrapper.appendChild(buildLangLabel(language));

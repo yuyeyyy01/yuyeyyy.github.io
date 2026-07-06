@@ -1,65 +1,61 @@
 @import "tailwindcss";
 
 /* ============================================================
-   设计系统 —— 苹果风双主题（shadcn Tailwind v4 变量方案）
-   深色为默认。浅色通过 [data-theme="light"] 覆盖。
-   配色：近黑白灰为主，苹果蓝 accent，极致留白。
+   设计系统 —— 渲染管线可视化语言（framegraph / LUT / color buffer）
+   双主题。深色为默认，浅色经 [data-theme="light"] 覆盖。
+   配色：冷调工程灰 + 青绿 accent（调试高亮面色）+ 极少量琥珀。
+   刻意避开 AI 默认三件套：暖米色+赤陶 / 近黑+acid 绿 / 报纸横线。
    ============================================================ */
 
 @theme {
-  /* 字体：SF Pro 优先，回退到系统字体栈 */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    "SF Pro Text", "Segoe UI", "Noto Sans SC", "PingFang SC", sans-serif;
-  --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, SFMono-Regular,
+  /* 字体：宋体担标题个性（出版物气质，渲染论文即此貌），
+     黑体担正文可读，等宽担技术标签与 frame 计数。 */
+  --font-sans: "PingFang SC", "Noto Sans SC", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-serif: "Source Han Serif SC", "Noto Serif SC", "Songti SC",
+    "STSong", -apple-system, serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, SFMono-Regular,
     Menlo, monospace;
 
-  /* 圆角：苹果偏大圆角 */
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
-  --radius-3xl: 1.75rem;
+  /* 圆角：克制——材质属性面板级的小圆角，非苹果大圆角 */
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 1rem;
 }
 
 /* ---------- 深色主题（默认）---------- */
 :root,
 [data-theme="dark"] {
-  --background: #000000;
-  --background-soft: #0a0a0a;
-  --surface: #111111;
-  --surface-2: #1a1a1a;
-  --foreground: #f5f5f7;
-  --foreground-soft: #a1a1a6;
-  --foreground-muted: #6e6e73;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --accent: #0a84ff;
-  --accent-foreground: #ffffff;
-  --ring: #0a84ff;
-
-  /* 环境背景层：顶部蓝光 + 底部紫光 + 星尘点阵 */
-  --bg-glow-1: rgba(10, 132, 255, 0.12);
-  --bg-glow-2: rgba(94, 92, 230, 0.08);
-  --bg-dot: rgba(255, 255, 255, 0.03);
+  --background: #070708;        /* 非纯黑，带极微冷灰，像 color buffer 清屏色 */
+  --background-soft: #0c0d0f;
+  --surface: #0e0f11;           /* 材质属性面板底 */
+  --surface-2: #141518;
+  --foreground: #e8eaed;
+  --foreground-soft: #a7adb5;
+  --foreground-muted: #6c727a;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --accent: #4fd2c6;            /* 青绿：shader 调试选中面的 teal，非蓝紫 */
+  --accent-foreground: #06140f;
+  --accent-warm: #e8b04b;       /* 琥珀：heatmap 高端，极少量 */
+  --ring: #4fd2c6;
 }
 
 /* ---------- 浅色主题 ---------- */
 [data-theme="light"] {
-  --background: #fbfbfd;
-  --background-soft: #f5f5f7;
+  --background: #f6f6f4;        /* 非纯白，暖中性灰，纸张感 */
+  --background-soft: #efeeea;
   --surface: #ffffff;
-  --surface-2: #f2f2f4;
-  --foreground: #1d1d1f;
-  --foreground-soft: #515154;
-  --foreground-muted: #86868b;
-  --border: rgba(0, 0, 0, 0.08);
-  --border-strong: rgba(0, 0, 0, 0.14);
-  --accent: #0071e3;
+  --surface-2: #f1f0ec;
+  --foreground: #14161a;
+  --foreground-soft: #4a4f57;
+  --foreground-muted: #868c96;
+  --border: rgba(0, 0, 0, 0.09);
+  --border-strong: rgba(0, 0, 0, 0.16);
+  --accent: #0e8c82;            /* 浅色下加深青绿保证对比 */
   --accent-foreground: #ffffff;
-  --ring: #0071e3;
-
-  /* 环境背景层：浅色下更克制，避免发灰 */
-  --bg-glow-1: rgba(0, 113, 227, 0.08);
-  --bg-glow-2: rgba(94, 92, 230, 0.05);
-  --bg-dot: rgba(0, 0, 0, 0.035);
+  --accent-warm: #b8841f;
+  --ring: #0e8c82;
 }
 
 /* ---------- 基础重置 ---------- */
@@ -76,7 +72,7 @@ body {
   line-height: 1.47;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   transition: background-color 0.3s ease, color 0.3s ease;
   position: relative;
   min-height: 100vh;
@@ -85,71 +81,60 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* 环境背景层：顶部蓝光晕 + 底部紫光晕，呼应"光谱/渲染"主题。
-   fixed 定位、pointer-events:none，只作氛围不参与交互。
-   通过 body::before 承载，sticky Header 的毛玻璃能透出这层光环境。 */
+/* ---------- 环境背景层：framegraph 网格底纹 ----------
+   灵感来自 RenderDoc / 材质编辑器的网格背景——渲染工程师每天看的视觉语言。
+   等距网格线，固定不滚动不呼吸，极淡只在空白区可见。
+   主网格 80px（major）+ 细网格 16px（minor，更淡），framegraph 双层网格质感。
+   mask 让网格在视口中部内容密集区渐隐，避免压文字；上下空白区可见。
+*/
+:root,
+[data-theme="dark"] {
+  --grid-major: rgba(255, 255, 255, 0.11);
+  --grid-minor: rgba(255, 255, 255, 0.035);
+}
+[data-theme="light"] {
+  --grid-major: rgba(0, 0, 0, 0.07);
+  --grid-minor: rgba(0, 0, 0, 0.03);
+}
+
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(
-      60% 50% at 50% -8%,
-      var(--bg-glow-1) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      50% 40% at 85% 108%,
-      var(--bg-glow-2) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      40% 30% at 12% 90%,
-      var(--bg-glow-1) 0%,
-      transparent 75%
-    );
-  background-repeat: no-repeat;
-  animation: bg-breathe 24s ease-in-out infinite;
-}
-
-/* 星尘点阵纹理：极淡的圆点网格，像优质纸张的微纹理。
-   随光晕一起超慢呼吸，增加空间深度，绝不喧宾夺主。 */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: radial-gradient(
-    var(--bg-dot) 1px,
-    transparent 1px
-  );
-  background-size: 28px 28px;
+  background-image:
+    /* minor 细网格 16px */
+    linear-gradient(to right, var(--grid-minor) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-minor) 1px, transparent 1px),
+    /* major 主网格 80px */
+    linear-gradient(to right, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-major) 1px, transparent 1px);
+  background-size:
+    16px 16px,
+    16px 16px,
+    80px 80px,
+    80px 80px;
   background-position: 0 0;
-  mask-image: radial-gradient(
-    80% 60% at 50% 30%,
+  /* 网格在视口中部（内容密集区）渐隐，上下空白区保留 —— 避免压文字 */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
     #000 0%,
-    transparent 85%
+    #000 12%,
+    transparent 38%,
+    transparent 62%,
+    #000 88%,
+    #000 100%
   );
-  -webkit-mask-image: radial-gradient(
-    80% 60% at 50% 30%,
+  mask-image: linear-gradient(
+    to bottom,
     #000 0%,
-    transparent 85%
+    #000 12%,
+    transparent 38%,
+    transparent 62%,
+    #000 88%,
+    #000 100%
   );
-  animation: bg-breathe 24s ease-in-out infinite;
-}
-
-/* 光晕/点阵超慢呼吸：opacity 在 0.7~1 间游移，让背景"活着"但不打扰阅读 */
-@keyframes bg-breathe {
-  0%,
-  100% {
-    opacity: 0.7;
-  }
-  50% {
-    opacity: 1;
-  }
 }
 
 /* 主题切换时整页柔和过渡 —— 只挂在 body + 主要颜色容器上，
@@ -215,46 +200,92 @@ a {
   .glass {
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
-    background: color-mix(in srgb, var(--background) 72%, transparent);
+    background: color-mix(in srgb, var(--background) 80%, transparent);
   }
 
-  /* 苹果主按钮：实心蓝 */
+  /* 主按钮：实心青绿，小圆角（非胶囊） */
   .btn-primary {
     background: var(--accent);
     color: var(--accent-foreground);
-    border-radius: 999px;
+    border-radius: 0.5rem;
     font-weight: 500;
+    letter-spacing: 0.01em;
     transition: transform 0.2s ease, background-color 0.2s ease,
       box-shadow 0.2s ease;
   }
   .btn-primary:hover {
-    background: color-mix(in srgb, var(--accent) 88%, white);
+    background: color-mix(in srgb, var(--accent) 90%, white);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
   }
   .btn-primary:active {
     transform: scale(0.98);
   }
 
-  /* 次级按钮：边框/底色 */
+  /* 次级按钮：边框/底色，小圆角 */
   .btn-secondary {
     background: var(--surface);
     color: var(--foreground);
     border: 1px solid var(--border-strong);
-    border-radius: 999px;
+    border-radius: 0.5rem;
     font-weight: 500;
-    transition: transform 0.2s ease, background-color 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease,
+      border-color 0.2s ease;
   }
   .btn-secondary:hover {
     background: var(--surface-2);
+    border-color: var(--accent);
   }
   .btn-secondary:active {
     transform: scale(0.98);
   }
 
-  /* 卡片：克制底色 + 细边框，无渐变 */
+  /* 卡片：材质属性面板式——细边框 + 极小圆角，无渐变无阴影 */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius-2xl);
+    border-radius: var(--radius-xl);
+  }
+
+  /* section 标签行：§ Latest / § Experiments / § About
+     framegraph pass 风格——细线 + monospace 标签，非 01/02 编号 */
+  .section-rule {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--foreground-muted);
+  }
+  .section-rule::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* signature：渲染状态指示器（LUT 渐变条 + frame 计数） */
+  .frame-indicator {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    color: var(--foreground-muted);
+  }
+  .lut-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--accent) 30%, transparent),
+      var(--accent),
+      var(--accent-warm)
+    );
+  }
+  /* frame 计数缓慢自增时配带的扫描光（极克制，仅 1px 亮线周期掠过 LUT 条） */
+  @keyframes lut-sweep {
+    0%, 100% { transform: translateX(-100%); opacity: 0; }
+    50% { opacity: 1; }
+    80% { transform: translateX(100%); opacity: 0; }
   }
 
   /* 表单输入：苹果风圆角 + 描边，focus 高亮 accent */
@@ -277,16 +308,25 @@ a {
   }
 }
 
-/* ---------- 代码块（文章正文）---------- */
+/* ---------- 代码块（文章正文）----------
+   framegraph pass 节点风：细边框 + 顶部 accent 线（由 CodeBlockEnhancer 加）。
+   enhancer 的 wrapper 顶部 2.5rem 留白给 § lang 标签，pre 自身 padding 顶部收窄。 */
 pre {
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  padding: 1rem 1.25rem;
+  border-top: none; /* 顶部由 enhancer 的 accent 线收口 */
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  padding: 1rem 1.25rem 1.25rem;
   overflow-x: auto;
   font-family: var(--font-mono);
-  font-size: 0.875rem;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+/* 没有 enhancer 包装的裸 pre（如 SSR fallback）保留完整边框 */
+:not([data-cbe-wrapper]) > pre {
+  border-top: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding-top: 1rem;
 }
 code {
   font-family: var(--font-mono);
@@ -294,8 +334,9 @@ code {
 :not(pre) > code {
   background: var(--surface-2);
   padding: 0.15em 0.4em;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 0.85em;
+  color: var(--accent);
 }
 
 /* ---------- 排版（文章正文）---------- */

@@ -3,6 +3,7 @@
 import Hero from "@/components/Hero";
 import ArticleCard, { type ArticleCardProps } from "@/components/ArticleCard";
 import ProjectCard, { type ProjectCardProps } from "@/components/ProjectCard";
+import { SUNSET_FRAG, PORTAL_FRAG, WATER_FRAG } from "@/components/project-shaders";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -46,20 +47,38 @@ const RENDER_PROJECTS: ProjectCardProps[] = [
     description:
       "仿《极乐迪斯科》的龙舌兰日落风格天空，带大气散射、日夜循环和体积云雾的尝试。",
     href: "https://github.com/yuyeyyy",
+    shader: SUNSET_FRAG,
+    shaderLabel: "sky",
   },
   {
     title: "Inception 风格 Portal",
     description:
       "使用 URP ScriptableRendererFeature 实现的多相机 Portal，支持折射、边缘 FX 和多层嵌套。",
     href: "https://github.com/yuyeyyy",
+    shader: PORTAL_FRAG,
+    shaderLabel: "portal",
   },
   {
     title: "水体 & 草地交互",
     description:
       "通过深度、法线与顶点动画实现风动草地和角色交互波纹，兼顾移动端性能优化。",
     href: "https://github.com/yuyeyyy",
+    shader: WATER_FRAG,
+    shaderLabel: "water",
   },
 ];
+
+/**
+ * section 标签行：framegraph pass 风格——§ Name + 细线延伸。
+ * 刻意不用 01/02/03 编号（skill 指出：除非是真序列否则编号是装饰）。
+ */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="section-rule">
+      <span>{children}</span>
+    </div>
+  );
+}
 
 export default function Home() {
   return (
@@ -68,16 +87,14 @@ export default function Home() {
 
       {/* 最近更新 */}
       <section className="container-page py-20 md:py-28">
+        <SectionLabel>§ Latest</SectionLabel>
         <motion.header
           variants={fadeUp}
           {...whileInViewConfig}
           viewport={{ once: true, margin: "-60px" }}
-          className="max-w-2xl"
+          className="mt-5 max-w-2xl"
         >
-          <p className="text-sm uppercase tracking-widest text-[var(--foreground-muted)]">
-            Latest
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
             最近更新
           </h2>
           <p className="mt-4 text-base leading-relaxed text-[var(--foreground-soft)]">
@@ -99,16 +116,14 @@ export default function Home() {
 
       {/* 渲染实验 */}
       <section id="projects" className="container-page scroll-mt-20 py-20 md:py-28">
+        <SectionLabel>§ Experiments</SectionLabel>
         <motion.header
           variants={fadeUp}
           {...whileInViewConfig}
           viewport={{ once: true, margin: "-60px" }}
-          className="max-w-2xl"
+          className="mt-5 max-w-2xl"
         >
-          <p className="text-sm uppercase tracking-widest text-[var(--foreground-muted)]">
-            Experiments
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
             一些渲染实验
           </h2>
           <p className="mt-4 text-base leading-relaxed text-[var(--foreground-soft)]">
@@ -130,16 +145,14 @@ export default function Home() {
 
       {/* 关于我 */}
       <section className="container-page py-20 md:py-28">
+        <SectionLabel>§ About</SectionLabel>
         <motion.header
           variants={fadeUp}
           {...whileInViewConfig}
           viewport={{ once: true, margin: "-60px" }}
-          className="max-w-2xl"
+          className="mt-5 max-w-2xl"
         >
-          <p className="text-sm uppercase tracking-widest text-[var(--foreground-muted)]">
-            About
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
             关于我
           </h2>
         </motion.header>

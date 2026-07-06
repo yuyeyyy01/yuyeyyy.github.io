@@ -54,12 +54,14 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
       aria-label="目录"
       className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pb-4"
     >
-      <p className="mb-3 text-xs uppercase tracking-widest text-[var(--foreground-muted)]">
-        目录
+      {/* framegraph pass 标签风：§ Index，与正文 § category 体系一致 */}
+      <p className="mb-3 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-[var(--foreground-muted)]">
+        <span className="text-[var(--accent)]">§</span> Index
       </p>
-      <ul className="space-y-2 border-l border-[var(--border)]">
-        {headings.map((h) => {
+      <ul className="space-y-1 border-l border-[var(--border)]">
+        {headings.map((h, i) => {
           const isActive = activeId === h.slug;
+          const idx = String(i + 1).padStart(2, "0");
           return (
             <li key={h.slug}>
               <a
@@ -69,19 +71,29 @@ export default function TableOfContents({ headings }: TableOfContentsProps) {
                   const el = document.getElementById(h.slug);
                   if (el) {
                     el.scrollIntoView({ behavior: "smooth", block: "start" });
-                    // 同步更新 URL hash，方便分享
                     history.replaceState(null, "", `#${h.slug}`);
                   }
                 }}
                 className={cn(
-                  "block border-l-2 py-1 text-sm leading-snug transition-colors duration-200",
-                  h.depth === 3 ? "pl-6" : "pl-4",
+                  "group block border-l-2 py-1 font-mono text-[0.78rem] leading-snug transition-colors duration-200",
+                  h.depth === 3 ? "pl-7" : "pl-3",
                   isActive
                     ? "border-[var(--accent)] text-[var(--foreground)]"
                     : "border-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground-soft)]",
                 )}
               >
-                {h.text}
+                {/* 行号前缀：mono 灰色，像 framegraph pass 序号；active 时变 accent */}
+                <span
+                  className={cn(
+                    "mr-2 text-[var(--foreground-muted)] transition-colors",
+                    isActive && "text-[var(--accent)]",
+                  )}
+                >
+                  {idx}
+                </span>
+                <span className="font-[family-name:var(--font-sans)]">
+                  {h.text}
+                </span>
               </a>
             </li>
           );
