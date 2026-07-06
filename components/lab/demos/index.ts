@@ -1,5 +1,6 @@
 import type { LabDemo } from "../types";
 import { volumetricLight } from "./volumetric-light";
+import { seascape } from "./seascape";
 import { metaballFluid } from "./metaball-fluid";
 import { ssr } from "./ssr";
 import { toon } from "./toon";
@@ -10,6 +11,7 @@ import { toon } from "./toon";
  */
 export const LAB_DEMOS: LabDemo[] = [
   volumetricLight,
+  seascape,
   metaballFluid,
   ssr,
   toon,
