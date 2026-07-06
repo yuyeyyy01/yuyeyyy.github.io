@@ -23,6 +23,7 @@ import Comments from "@/components/Comments";
 import Scene from "@/components/Scene";
 import ShaderDemo from "@/components/ShaderDemo";
 import { PlaygroundPBR, PlaygroundSSS, PlaygroundHair } from "@/components/PlaygroundPresets";
+import PBRPlayground from "@/components/PBRPlayground";
 import Figure from "@/components/Figure";
 import Video from "@/components/Video";
 
@@ -127,6 +128,7 @@ export default async function PostPage({ params }: PageProps) {
                   PlaygroundPBR,
                   PlaygroundSSS,
                   PlaygroundHair,
+                  PBRPlayground,
                   Figure,
                   Video,
                 }}

@@ -202,11 +202,11 @@ $$
 F(\mathbf{v},\mathbf{h}) = F_0 + (1 - F_0)(1 - \mathbf{v}\cdot\mathbf{h})^5
 $$
 
-下面是用默认 shader 展示上述 BRDF 项叠加效果的实时演示：
+下面是手写 Cook-Torrance BRDF 的实时调参 demo：拖 `roughness` 看高光宽窄，拖 `metallic` 看金属流 F0 = albedo，点预设按钮一键对比金 / 铜 / 塑料 / 铁的高光形态差异——上面的 α 平方链、Fresnel、能量守恒都在这个球上。
 
-<ShaderDemo />
+<PBRPlayground />
 
-也可以直接编辑 fragment shader、拖滑块实时调参：拖 `roughness` 看高光宽窄变化，拖 `metallic` 看金属流 F0 = albedo 的效果——上面的 α 平方链、Fresnel、能量守恒都在这个沙盒里。
+也可以直接编辑 fragment shader、拖滑块实时调参（2D 假球沙盒，可改代码）：
 
 <PlaygroundPBR />
 
