@@ -76,7 +76,6 @@ export default async function PostPage({ params }: PageProps) {
 
   return (
     <>
-      <ReadingProgress />
       <main className="container-page mx-auto py-24">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-[minmax(0,42rem)_16rem]">
           {/* 左侧：文章正文 */}
@@ -173,6 +172,7 @@ export default async function PostPage({ params }: PageProps) {
           </aside>
         </div>
       </main>
+      <ReadingProgress />
     </>
   );
 }
