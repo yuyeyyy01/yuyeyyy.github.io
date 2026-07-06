@@ -60,7 +60,7 @@ void main() {
   float D = a2 / max(3.14159 * d * d, 1e-7);
   float F = F0.r + (1.0 - F0.r) * pow(1.0 - vdh, 5.0);
   float spec = D * F * ndl;
-  vec3 kd = (1.0 - F) * (1.0 - uMetallic);
+  vec3 kd = vec3((1.0 - F) * (1.0 - uMetallic));
   vec3 col = albedo * kd * ndl + vec3(0.91, 0.69, 0.29) * spec;
   col += albedo * 0.08;
   fragColor = vec4(col, 1.0);
