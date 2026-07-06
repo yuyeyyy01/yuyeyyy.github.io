@@ -6,6 +6,7 @@ description: "自定义 PBR 与 Unity Lit 的差异拆解"
 tags: ["PBR", "URP", "Shader", "GGX"]
 ---
 
+
 > 本文记录从 Unity Lit 迁到自定义 PBR 时踩过的坑与差异点，主要关注 BRDF 项、能量守恒、几何可见性函数的差异。
 
 ## 引言
@@ -202,11 +203,7 @@ $$
 F(\mathbf{v},\mathbf{h}) = F_0 + (1 - F_0)(1 - \mathbf{v}\cdot\mathbf{h})^5
 $$
 
-下面是手写 Cook-Torrance BRDF 的实时调参 demo：拖 `roughness` 看高光宽窄，拖 `metallic` 看金属流 F0 = albedo，点预设按钮一键对比金 / 铜 / 塑料 / 铁的高光形态差异——上面的 α 平方链、Fresnel、能量守恒都在这个球上。
-
-<PBRPlayground />
-
-也可以直接编辑 fragment shader、拖滑块实时调参（2D 假球沙盒，可改代码）：
+下面是 Cook-Torrance BRDF 的可交互演示，拖动粗糙度/金属度滑块看高光形态变化：
 
 <PlaygroundPBR />
 

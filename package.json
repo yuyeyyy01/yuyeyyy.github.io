@@ -30,8 +30,6 @@
     "@milkdown/preset-commonmark": "^7.21.2",
     "@milkdown/react": "^7.21.2",
     "@milkdown/theme-nord": "^7.21.2",
-    "@react-three/drei": "^10.7.7",
-    "@react-three/fiber": "^9.6.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "feed": "^5.2.1",
@@ -55,7 +53,6 @@
     "remark-parse": "^11.0.0",
     "shiki": "^4.3.0",
     "tailwind-merge": "^3.6.0",
-    "three": "^0.185.1",
     "unified": "^11.0.5"
   },
   "devDependencies": {
@@ -64,7 +61,6 @@
     "@types/node": "^22.10.7",
     "@types/react": "^19.0.7",
     "@types/react-dom": "^19.0.3",
-    "@types/three": "^0.185.0",
     "eslint": "^9",
     "eslint-config-next": "^15.1.6",
     "pagefind": "^1.5.2",

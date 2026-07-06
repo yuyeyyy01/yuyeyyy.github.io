@@ -1,21 +1,39 @@
 "use client";
-
-import ShaderPlayground from "./ShaderPlayground";
-import { PBR_FRAG, PBR_UNIFORMS, SSS_FRAG, SSS_UNIFORMS, HAIR_FRAG, HAIR_UNIFORMS } from "./shader-playground-presets";
+import { useId, useRef, useEffect } from "react";
+import { renderShaderHTML } from "@/components/webgl-demos/inline-renderer";
+import { renderControlsHTML } from "@/components/webgl-demos/controls-html";
+import { DEMOS } from "@/components/webgl-demos/shaders";
+import { mountHTMLString } from "@/components/webgl-demos/mount";
 
 /**
- * 三个预配置 Playground，MDX 里直接 <PlaygroundPBR /> 即可，无需传 fragment。
- * 分别对应 PBR / SSS / Hair 三篇文章。
+ * Playground —— 单个预配置 shader 沙盒外壳。
+ * 把渲染器 + 控件两段 HTML 字符串拼起来，mountHTMLString 激活 <script>。
  */
+function Playground({ demoId }: { demoId: "pbr" | "sss" | "hair" }) {
+  const id = useId().replace(/[:]/g, "");
+  const canvasId = "pg-" + id;
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ref.current) return;
+    const html =
+      renderShaderHTML({ demoId, canvasId, height: 320 }) +
+      renderControlsHTML({ canvasId, uniforms: DEMOS[demoId].uniforms });
+    mountHTMLString(html, ref.current);
+  }, [demoId, canvasId]);
+  return <div ref={ref} />;
+}
 
+/** PBR 沙盒：roughness / metallic 滑块，呼应 custom-pbr-vs-unity-lit.mdx */
 export function PlaygroundPBR() {
-  return <ShaderPlayground fragment={PBR_FRAG} uniforms={PBR_UNIFORMS} label="pbr" height={320} />;
+  return <Playground demoId="pbr" />;
 }
 
+/** SSS 沙盒：thickness / tint 滑块，呼应 skin-sss-thickness-lut.mdx */
 export function PlaygroundSSS() {
-  return <ShaderPlayground fragment={SSS_FRAG} uniforms={SSS_UNIFORMS} label="sss" height={320} />;
+  return <Playground demoId="sss" />;
 }
 
+/** Hair 沙盒：shift 滑块，呼应 kajiya-kay-marschner-hair.mdx */
 export function PlaygroundHair() {
-  return <ShaderPlayground fragment={HAIR_FRAG} uniforms={HAIR_UNIFORMS} label="hair" height={320} />;
+  return <Playground demoId="hair" />;
 }

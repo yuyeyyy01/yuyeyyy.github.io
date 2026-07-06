@@ -9,6 +9,10 @@
 
 import { marked } from "marked";
 import type { CloudflareEnv } from "../_lib";
+import { renderShaderHTML } from "../../components/webgl-demos/inline-renderer";
+import { renderSceneHTML } from "../../components/webgl-demos/scene-mesh";
+import { renderControlsHTML } from "../../components/webgl-demos/controls-html";
+import { DEMOS } from "../../components/webgl-demos/shaders";
 
 interface PostRow {
   slug: string;
@@ -345,6 +349,10 @@ async function htmlResponse(
 function preprocessMdx(md: string): string {
   let result = md;
 
+  // canvas id 计数器：每个 demo 一个唯一 id，避免页面内多个 demo 冲突
+  let canvasSeq = 0;
+  const nextId = () => "ssr-demo-" + (++canvasSeq);
+
   // <Video bilibili="xxx" caption="yyy" /> → iframe
   result = result.replace(
     /<Video\s+bilibili="([^"]+)"(?:\s+caption="([^"]*)")?\s*\/?>/g,
@@ -362,16 +370,56 @@ function preprocessMdx(md: string): string {
     },
   );
 
-  // <Scene ... /> / <Scene>...</Scene> → 占位提示
+  // <Scene>...children...</Scene> → vanilla WebGL icosahedron mesh
+  // children 是 r3f mesh 语法，vanilla 不支持，统一用 icosahedron 暗示自定义 mesh
   result = result.replace(
-    /<Scene[\s\S]*?(?:\/>|<\/Scene>)/g,
-    '<div class="card my-6 flex items-center justify-center p-8 text-sm text-[var(--foreground-muted)]">🎮 3D 交互场景（完整体验请访问静态版本）</div>',
+    /<Scene>[\s\S]*?<\/Scene>/g,
+    () => renderSceneHTML({ canvasId: nextId(), height: 320, mesh: 'icosahedron' }),
   );
 
-  // <ShaderDemo ... /> → 占位提示
+  // <Scene autoRotate /> → vanilla WebGL octahedron mesh + 自动旋转
   result = result.replace(
-    /<ShaderDemo[\s\S]*?(?:\/>|<\/ShaderDemo>)/g,
-    '<div class="card my-6 flex items-center justify-center p-8 text-sm text-[var(--foreground-muted)]">🎨 Shader 交互演示（完整体验请访问静态版本）</div>',
+    /<Scene\s+autoRotate\s*\/>/g,
+    () => renderSceneHTML({ canvasId: nextId(), height: 320, autoRotate: true, mesh: 'octahedron' }),
+  );
+
+  // <Scene /> → vanilla WebGL octahedron mesh（静态）
+  result = result.replace(
+    /<Scene\s*\/>/g,
+    () => renderSceneHTML({ canvasId: nextId(), height: 320, autoRotate: false, mesh: 'octahedron' }),
+  );
+
+  // <ShaderDemo /> → vanilla WebGL shader demo（全屏 triangle + UV 渐变）
+  result = result.replace(
+    /<ShaderDemo\s*\/>/g,
+    () => renderShaderHTML({ demoId: 'shader-demo', canvasId: nextId(), height: 320 }),
+  );
+
+  // <PlaygroundPBR /> → shader + 控件（共用同一 canvasId，让控件 dispatch 的 uniform-change 事件能被 shader IIFE 接收）
+  result = result.replace(
+    /<PlaygroundPBR\s*\/>/g,
+    () => {
+      const id = nextId();
+      return renderShaderHTML({ demoId: 'pbr', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.pbr.uniforms });
+    },
+  );
+
+  // <PlaygroundSSS /> → shader + 控件
+  result = result.replace(
+    /<PlaygroundSSS\s*\/>/g,
+    () => {
+      const id = nextId();
+      return renderShaderHTML({ demoId: 'sss', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.sss.uniforms });
+    },
+  );
+
+  // <PlaygroundHair /> → shader + 控件
+  result = result.replace(
+    /<PlaygroundHair\s*\/>/g,
+    () => {
+      const id = nextId();
+      return renderShaderHTML({ demoId: 'hair', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.hair.uniforms });
+    },
   );
 
   // <Figure ... /> → img
