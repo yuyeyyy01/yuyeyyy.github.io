@@ -211,13 +211,7 @@ void main() {
 }
 `,
   // 列表卡片预览：精简静态首帧，硬编码 32 步，不用宏
-  miniFragment: `#version 300 es
-precision highp float;
-uniform float iTime;
-uniform vec2 iResolution;
-out vec4 fragColor;
-#define uv (gl_FragCoord.xy / iResolution.xy)
-#define COL_TEAL vec3(0.31,0.82,0.78)
+  miniFragment: `#define COL_TEAL vec3(0.31,0.82,0.78)
 #define COL_AMBER vec3(0.91,0.69,0.29)
 #define COL_DARK vec3(0.02,0.025,0.03)
 float smin(float a,float b,float k){float h=clamp(0.5+0.5*(a-b)/k,0.0,1.0);return mix(a,b,h)-k*h*(1-h);}

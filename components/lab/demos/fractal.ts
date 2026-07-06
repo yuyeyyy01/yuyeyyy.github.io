@@ -160,13 +160,7 @@ void main() {
 }
 `,
   // 列表卡片精简预览：硬编码 32 步、8 次分形迭代
-  miniFragment: `#version 300 es
-precision highp float;
-uniform float iTime;
-uniform vec2 iResolution;
-out vec4 fragColor;
-#define uv (gl_FragCoord.xy / iResolution.xy)
-float de(vec3 pos, float power, out float trap){
+  miniFragment: `float de(vec3 pos, float power, out float trap){
   vec3 z=pos; float dr=1.0, r=0.0; trap=1e10;
   for(int i=0;i<8;i++){
     r=length(z); trap=min(trap,r); if(r>2.0) break;

@@ -143,13 +143,7 @@ void main() {
 }
 `,
   // 列表卡片用的精简预览（静态首帧也能看海面）
-  miniFragment: `#version 300 es
-precision highp float;
-uniform float iTime;
-uniform vec2 iResolution;
-out vec4 fragColor;
-#define uv (gl_FragCoord.xy / iResolution.xy)
-float seaHeight(vec2 p){
+  miniFragment: `float seaHeight(vec2 p){
   float freq=0.16,amp=1.0,t=iTime*0.8;mat2 rot=mat2(0.8,0.6,-0.6,0.8);float h=0.0;
   for(int i=0;i<4;i++){vec2 q=p*freq+vec2(t*0.5,0.0);float w=sin(q.x*2.0+sin(q.y*3.0+t))*0.5+sin(q.y*2.7-t*0.7)*0.3;h+=w*amp;p=rot*p;freq*=2.0;amp*=0.5;}return h*0.6;
 }
