@@ -22,6 +22,7 @@ import CodeBlockEnhancer from "@/components/CodeBlockEnhancer";
 import Comments from "@/components/Comments";
 import Scene from "@/components/Scene";
 import ShaderDemo from "@/components/ShaderDemo";
+import { PlaygroundPBR, PlaygroundSSS, PlaygroundHair } from "@/components/PlaygroundPresets";
 import Figure from "@/components/Figure";
 import Video from "@/components/Video";
 
@@ -120,7 +121,15 @@ export default async function PostPage({ params }: PageProps) {
                     ],
                   },
                 }}
-                components={{ Scene, ShaderDemo, Figure, Video }}
+                components={{
+                  Scene,
+                  ShaderDemo,
+                  PlaygroundPBR,
+                  PlaygroundSSS,
+                  PlaygroundHair,
+                  Figure,
+                  Video,
+                }}
               />
             </div>
 
