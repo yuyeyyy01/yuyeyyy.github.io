@@ -98,13 +98,17 @@ export function renderShaderHTML(opts: RenderShaderHTMLOpts): string {
     "return;" +
     "}" +
     "gl.useProgram(prog);" +
-    // 全屏 triangle
+    // 全屏 triangle（顶点缓冲 + attrib 绑定抽成函数：canvas.width 重设会清空 GL 状态，resize 后要重绑）
     "var buf=gl.createBuffer();" +
+    "var aPos=gl.getAttribLocation(prog,'a_pos');" +
+    "function bindVert(){" +
+    "gl.useProgram(prog);" +
     "gl.bindBuffer(gl.ARRAY_BUFFER,buf);" +
     "gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);" +
-    "var aPos=gl.getAttribLocation(prog,'a_pos');" +
     "gl.enableVertexAttribArray(aPos);" +
     "gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,0,0);" +
+    "}" +
+    "bindVert();" +
     // 内置 uniform location
     "var uTime=gl.getUniformLocation(prog,'iTime');" +
     "var uRes=gl.getUniformLocation(prog,'iResolution');" +
@@ -155,6 +159,8 @@ export function renderShaderHTML(opts: RenderShaderHTMLOpts): string {
     "var h=Math.max(1,Math.floor(canvas.clientHeight*dpr));" +
     "if(canvas.width!==w||canvas.height!==h){" +
     "canvas.width=w;canvas.height=h;" +
+    // 重设 canvas.width 会清空画布并重置 GL 顶点状态（program/attrib pointer 失效），必须重绑
+    "bindVert();" +
     "}" +
     "gl.viewport(0,0,w,h);" +
     "}" +
