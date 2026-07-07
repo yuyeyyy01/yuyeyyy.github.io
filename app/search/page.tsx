@@ -72,7 +72,7 @@ export default function SearchPage() {
     (async () => {
       try {
         const mod = (await import(
-          /* @vite-ignore */ window.location.origin + `${BASE_PATH}/pagefind/pagefind.js`
+          /* webpackIgnore: true */ window.location.origin + `${BASE_PATH}/pagefind/pagefind.js`
         )) as PagefindModule;
         if (cancelled) return;
         await mod.init();
