@@ -46,7 +46,7 @@ export function renderSceneHTML(opts: RenderSceneHTMLOpts): string {
   try {
     var canvas = document.getElementById(canvasId);
     if (!canvas) { console.warn('scene mesh: canvas not found', canvasId); return; }
-    var gl = canvas.getContext('webgl2', { antialias: true, alpha: true, premultipliedAlpha: false });
+    var gl = canvas.getContext('webgl2', { antialias: true, alpha: true, premultipliedAlpha: false, preserveDrawingBuffer: true });
     if (!gl) { console.warn('scene mesh: webgl2 not supported'); return; }
 
     // ---- mat4 库（最简，column-major，不依赖 gl-matrix） ----

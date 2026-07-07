@@ -66,7 +66,7 @@ export function renderShaderHTML(opts: RenderShaderHTMLOpts): string {
     // reduced-motion 首帧静态判断
     "var mql=window.matchMedia('(prefers-reduced-motion: reduce)');" +
     "var reduced=mql.matches;" +
-    "var glCtx=canvas.getContext('webgl2',{antialias:false,alpha:true,premultipliedAlpha:true,powerPreference:'low-power'});" +
+    "var glCtx=canvas.getContext('webgl2',{antialias:false,alpha:true,premultipliedAlpha:true,powerPreference:'low-power',preserveDrawingBuffer:true});" +
     "if(!glCtx){return;}" +
     "var gl=glCtx;" +
     // --- shader 源码（与 MiniShader 一致的 prelude）---
