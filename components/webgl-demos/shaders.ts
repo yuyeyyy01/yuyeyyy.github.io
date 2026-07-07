@@ -102,17 +102,20 @@ const HAIR_FRAG = `
 uniform float uShift;
 void main() {
   vec2 p = uv;
-  float ang = 0.5 + 0.3 * sin(p.x * 6.28318 + iTime * 0.2);
-  vec3 t = normalize(vec3(cos(ang), sin(ang), 0.3));
+  float curve = (p.y - 0.5) * 3.14159;
+  vec3 t = normalize(vec3(0.08 * sin(p.x * 15.0 + iTime * 0.3), cos(curve), sin(curve)));
   vec3 n = vec3(0.0, 0.0, 1.0);
-  vec3 l = normalize(vec3(0.4, 0.3, 0.8));
+  vec3 ts = normalize(t + n * (uShift * 0.03 - 0.48));
+  vec3 l = normalize(vec3(0.4, 0.6, 0.7));
   vec3 v = vec3(0.0, 0.0, 1.0);
   vec3 h = normalize(l + v);
-  float sinTH = dot(t, h);
-  float spec = pow(sinTH * sinTH, uShift);
+  float TdotH = dot(ts, h);
+  float sinTH = sqrt(1.0 - TdotH * TdotH);
+  float spec = pow(sinTH, 24.0);
   float diff = max(dot(n, l), 0.0);
-  vec3 base = vec3(0.04, 0.05, 0.06);
-  vec3 col = base * diff * 0.6 + vec3(0.31, 0.82, 0.78) * spec;
+  float strand = smoothstep(0.3, 0.5, sin(p.x * 60.0) * 0.5 + 0.5);
+  vec3 hair = mix(vec3(0.06, 0.04, 0.03), vec3(0.14, 0.09, 0.06), strand);
+  vec3 col = hair * (diff * 0.6 + 0.25) + vec3(0.31, 0.82, 0.78) * spec;
   fragColor = vec4(col, 1.0);
 }
 `;
