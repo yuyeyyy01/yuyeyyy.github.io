@@ -4,13 +4,14 @@ import { ArrowRight } from "lucide-react";
 import AboutHero from "@/components/about/AboutHero";
 import SkillPipeline from "@/components/about/SkillPipeline";
 import RenderRadar from "@/components/about/RenderRadar";
+import CareerTimeline from "@/components/about/CareerTimeline";
 import AboutTimeline from "@/components/about/AboutTimeline";
 import { CONTACT } from "@/lib/about-data";
 
 export const metadata: Metadata = {
   title: "关于我 — Yuyeyyy",
   description:
-    "Unity 图形 / Shader 爱好者，偏技术美术 / 渲染工程方向。技能 pass 串、六维渲染能力雷达与项目时间线。",
+    "Unity 图形 / Shader 爱好者，偏技术美术 / 渲染工程方向。工作经历、技能 pass 串、六维渲染能力雷达与项目时间线。",
 };
 
 /**
@@ -26,9 +27,24 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export default function AboutPage() {
   return (
-    <main>
-      {/* § About：签名区 */}
+    <main className="about-page">
+      {/* § About：签名区，交互背景挂在这一个 section 内部 */}
       <AboutHero />
+
+      {/* § Career：工作经历 */}
+      <section className="container-page py-20 md:py-28">
+        <SectionLabel>§ Career</SectionLabel>
+        <header className="mt-5 max-w-2xl">
+          <h2 className="font-[family-name:var(--font-serif)] text-3xl font-semibold tracking-tight text-[var(--foreground)] md:text-4xl">
+            工作经历
+          </h2>
+          <p className="mt-4 text-base leading-relaxed text-[var(--foreground-soft)]">
+            按职业阶段倒序排列。每段列出实际负责的系统与产出，
+            <span className="font-mono text-[var(--accent)]">§ active</span> 标记当前在职。
+          </p>
+        </header>
+        <CareerTimeline />
+      </section>
 
       {/* § Passes：技能 pass 串 */}
       <section className="container-page py-20 md:py-28">

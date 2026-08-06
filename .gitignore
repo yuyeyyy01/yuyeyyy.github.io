@@ -6,6 +6,9 @@ node_modules
 # next.js
 /.next/
 /out/
+# 构建中断后腾挪出来的旧缓存目录（safe-delete 阻塞时用 mv 代替 rm 产生）
+/.next-locked-*/
+/.next-stale-*/
 
 # production
 /build
@@ -32,6 +35,13 @@ next-env.d.ts
 
 # claude code 会话/工具产物
 .claude/
+
+# WorkBuddy 工作区数据（记忆、预览产物、临时修复目录）
+.workbuddy/
+
+# IDE
+.idea/
+*.iml
 
 # D1 导出产物（构建前由 scripts/export-d1-posts.mjs 生成，不进 git）
 content/blog/.d1-export.json

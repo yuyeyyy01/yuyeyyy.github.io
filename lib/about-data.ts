@@ -50,6 +50,25 @@ export interface ContactInfo {
   site: string;
 }
 
+export interface CareerItem {
+  /** 起止时间，如 "2024.03 — 至今" */
+  period: string;
+  /** 公司 / 组织 */
+  company: string;
+  /** 岗位 */
+  role: string;
+  /** 所在地 */
+  location: string;
+  /** 该阶段一句话定位 */
+  summary: string;
+  /** 具体产出，每条一句，尽量带可量化结果 */
+  highlights: string[];
+  /** 技术栈标签 */
+  stack: string[];
+  /** 是否为当前在职 —— 影响节点高亮 */
+  current?: boolean;
+}
+
 /** 技能 pass 串：7 项渲染方向，按 framegraph pass 排列 */
 export const SKILL_PASSES: SkillPass[] = [
   {
@@ -207,6 +226,59 @@ export const CONTACT: ContactInfo = {
   github: "https://github.com/yuyeyyy",
   site: "https://yuyepage.pages.dev",
 };
+
+/**
+ * 工作经历：倒序排列，最新在前。
+ *
+ * 内容基于实际 UE5 技术美术工作与个人渲染研究整理。
+ * 公司名与起止时间为占位（标注为「待补充」的字段请按实际情况替换）。
+ */
+export const CAREER_ITEMS: CareerItem[] = [
+  {
+    period: "2025.03 — 至今",
+    company: "UE5 射击项目组",
+    role: "技术美术（TA）",
+    location: "待补充",
+    summary:
+      "负责武器与瞄具方向的材质、着色器与美术工具链，在美术表现与运行时预算之间找平衡点。",
+    highlights: [
+      "搭建武器清漆（Clearcoat）材质系统：UV1 独立通道 + ORN 打包纹理，法线 XY 压入 B/A 通道，单材质承载底漆、清漆、磨损三层表现。",
+      "定位并修复清漆材质 UV 接缝：追到 MF_UnPackNormal 末尾缺 Normalize 与硬边导致切线空间断裂两层根因，同步沉淀「UV Seam + 硬边 = 固有接缝」的美术沟通口径。",
+      "实现 ADS 瞄具后处理 MP_ScopeSceneEffect：镜内裁剪放大，ZoomProgressRate 驱动开镜进度，渲染阶段置于 TAA 之后规避抖动。",
+      "构建 HUD 与武器 UI 材质系统：纹理图集 UV 变换驱动多位数弹药显示，替代逐位 Widget 的高开销做法。",
+      "产出美术自检工具：灰度检测工具（已打包 exe）、虹膜生成器（MF_IrisGenerator + SphereMask），把重复的目视校验变成可复现流程。",
+    ],
+    stack: ["UE5", "HLSL", "Material Editor", "RenderDoc", "SVN"],
+    current: true,
+  },
+  {
+    period: "2024 — 2025",
+    company: "个人渲染研究",
+    role: "Unity 图形 / Shader",
+    location: "远程",
+    summary:
+      "以「拆掉黑盒」为目标做系统性渲染练习，产出可复现的 Shader 实现与配套笔记。",
+    highlights: [
+      "从零实现一套 PBR 并逐项对齐 Unity URP/Lit，拆解 BRDF 差异与近场、远场光照的分离处理。",
+      "完成厚度图驱动 + 预积分 LUT 的皮肤 SSS 流水线，覆盖 kernel 生成到屏幕空间模糊全链路。",
+      "用双 Kajiya-Kay 高光近似 Marschner 的头发着色，验证多分支高光对体积感的贡献。",
+      "基于 ScriptableRendererFeature 做多相机 Portal、体积光与动态天空盒，同步整理成站内文章。",
+    ],
+    stack: ["Unity URP", "HLSL", "ShaderGraph", "C#", "Frame Debugger"],
+  },
+  {
+    period: "待补充",
+    company: "待补充",
+    role: "待补充",
+    location: "待补充",
+    summary:
+      "在此补充更早的经历。若无更早经历，直接删除 lib/about-data.ts 中的这一条即可。",
+    highlights: [
+      "把这些条目替换为具体做了什么、用了什么方法、带来什么结果。",
+    ],
+    stack: ["待补充"],
+  },
+];
 
 /** AboutHero 副标题：浓缩原 about 第一段 */
 export const ABOUT_SUMMARY =
