@@ -223,7 +223,7 @@ export const TIMELINE_ITEMS: TimelineItem[] = [
 /** 联系方式：email 为占位，建议替换为真实邮箱 */
 export const CONTACT: ContactInfo = {
   email: "yuyeyyy@yuyepage.pages.dev",
-  github: "https://github.com/yuyeyyy",
+  github: "https://github.com/yuyeyyy1",
   site: "https://yuyepage.pages.dev",
 };
 
@@ -235,18 +235,18 @@ export const CONTACT: ContactInfo = {
  */
 export const CAREER_ITEMS: CareerItem[] = [
   {
-    period: "2025.03 — 至今",
-    company: "UE5 射击项目组",
+    period: "2025.05 — 至今",
+    company: "预研UE5射击项目组",
     role: "技术美术（TA）",
-    location: "待补充",
+    location: "腾讯魔方工作室",
     summary:
-      "负责武器与瞄具方向的材质、着色器与美术工具链，在美术表现与运行时预算之间找平衡点。",
+      "负责角色/道具/场景材质、着色器与美术工具链，在美术表现与运行时预算之间找平衡点。",
     highlights: [
-      "搭建武器清漆（Clearcoat）材质系统：UV1 独立通道 + ORN 打包纹理，法线 XY 压入 B/A 通道，单材质承载底漆、清漆、磨损三层表现。",
-      "定位并修复清漆材质 UV 接缝：追到 MF_UnPackNormal 末尾缺 Normalize 与硬边导致切线空间断裂两层根因，同步沉淀「UV Seam + 硬边 = 固有接缝」的美术沟通口径。",
-      "实现 ADS 瞄具后处理 MP_ScopeSceneEffect：镜内裁剪放大，ZoomProgressRate 驱动开镜进度，渲染阶段置于 TAA 之后规避抖动。",
+      "复杂材质编写搭建清漆材质系统，透明物体高亮描边,角色面部材质优化，：。",
+      "。",
+      "实现 ADS 瞄具。",
       "构建 HUD 与武器 UI 材质系统：纹理图集 UV 变换驱动多位数弹药显示，替代逐位 Widget 的高开销做法。",
-      "产出美术自检工具：灰度检测工具（已打包 exe）、虹膜生成器（MF_IrisGenerator + SphereMask），把重复的目视校验变成可复现流程。",
+      "产出美术自检工具：灰度检测工具（已打包 exe）、虹膜生成器（MF_IrisGenerator + SphereMask），引擎内部nanite自检插件，把重复的目视校验变成可复现流程。",
     ],
     stack: ["UE5", "HLSL", "Material Editor", "RenderDoc", "SVN"],
     current: true,
@@ -259,12 +259,14 @@ export const CAREER_ITEMS: CareerItem[] = [
     summary:
       "以「拆掉黑盒」为目标做系统性渲染练习，产出可复现的 Shader 实现与配套笔记。",
     highlights: [
-      "从零实现一套 PBR 并逐项对齐 Unity URP/Lit，拆解 BRDF 差异与近场、远场光照的分离处理。",
+        "仿照《极乐迪斯科》室内光照系统———实现2D 面片仿 3D 渲染方案：AI 辅助预渲染与全屏坐标重建",
+        "仿照《幻塔》风格化后处理描边方案——实现风格化抗时序抖动描边",
+        "仿照《恋与深空》用双 Kajiya-Kay 高光近似 Marschner 的头发着色，研究头发材质渲染表现。",
       "完成厚度图驱动 + 预积分 LUT 的皮肤 SSS 流水线，覆盖 kernel 生成到屏幕空间模糊全链路。",
-      "用双 Kajiya-Kay 高光近似 Marschner 的头发着色，验证多分支高光对体积感的贡献。",
-      "基于 ScriptableRendererFeature 做多相机 Portal、体积光与动态天空盒，同步整理成站内文章。",
+      "基于 ScriptableRendererFeature 做多相机 Portal、体积光与动态天空盒，二次元卡渲后处理描边同步整理成站内文章。",
+        
     ],
-    stack: ["Unity URP", "HLSL", "ShaderGraph", "C#", "Frame Debugger"],
+    stack: ["Unity URP", "HLSL", "Shader", "C#", "Frame Debugger","RenderDoc", "Git"],
   },
   {
     period: "待补充",
