@@ -6,8 +6,6 @@ description: "基于厚度图的皮肤 SSS：预积分 LUT 实战"
 tags: ["SSS", "Skin", "LUT", "URP"]
 ---
 
-
-
 > 本文记录基于厚度图 + 预积分 LUT 实现皮肤次表面散射的实战过程，附 LUT 烘焙思路与 Shader 代码。
 
 ## 引言
@@ -183,7 +181,12 @@ $$
 <Scene>
   <mesh rotation={[0.3, 0.8, 0]}>
     <icosahedronGeometry args={[1.3, 1]} />
-    <meshStandardMaterial color="#5e5ce6" metalness={0.4} roughness={0.3} flatShading />
+    <meshStandardMaterial
+      color="#5e5ce6"
+      metalness={0.4}
+      roughness={0.3}
+      flatShading
+    />
   </mesh>
 </Scene>
 

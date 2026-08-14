@@ -6,12 +6,12 @@
 
 PR 进度：
 
-| PR  | 内容                          | 状态   |
-| --- | ----------------------------- | ------ |
+| PR  | 内容                                     | 状态   |
+| --- | ---------------------------------------- | ------ |
 | PR1 | 基础设施（D1 / wrangler / 环境变量解耦） | 已合并 |
-| PR2 | 评论接口 + 评论审核 UI          | 已合并 |
-| PR3 | 写作后台（文章 CRUD UI + API）  | 已合并 |
-| PR4 | Edge SSR 替代重建方案 + 迁移收尾 | 进行中 |
+| PR2 | 评论接口 + 评论审核 UI                   | 已合并 |
+| PR3 | 写作后台（文章 CRUD UI + API）           | 已合并 |
+| PR4 | Edge SSR 替代重建方案 + 迁移收尾         | 进行中 |
 
 ## 2. 整体架构
 
@@ -66,42 +66,42 @@ PR 进度：
 
 ### posts（文章表）
 
-| 字段          | 类型    | 约束 / 默认                     | 说明                          |
-| ------------- | ------- | ------------------------------- | ----------------------------- |
-| slug          | TEXT    | PRIMARY KEY                     | URL slug，小写字母数字横线     |
-| title         | TEXT    | NOT NULL DEFAULT ''             | 标题                          |
-| date          | TEXT    | NOT NULL DEFAULT ''             | 发布日期（YYYY-MM-DD）         |
-| category      | TEXT    | NOT NULL DEFAULT ''             | 分类                          |
-| description   | TEXT    | NOT NULL DEFAULT ''             | 摘要                          |
-| tags          | TEXT    | NOT NULL DEFAULT '[]'           | JSON 数组字符串               |
-| content_md    | TEXT    | NOT NULL DEFAULT ''             | MDX 原文                      |
-| content_html  | TEXT    | NOT NULL DEFAULT ''             | 预渲染 HTML（当前未使用，SSR 实时渲染）|
-| updated_at    | TEXT    | NOT NULL DEFAULT datetime('now')| 更新时间                      |
-| published     | INTEGER | NOT NULL DEFAULT 1              | 0 草稿 / 1 已发布             |
+| 字段         | 类型    | 约束 / 默认                      | 说明                                    |
+| ------------ | ------- | -------------------------------- | --------------------------------------- |
+| slug         | TEXT    | PRIMARY KEY                      | URL slug，小写字母数字横线              |
+| title        | TEXT    | NOT NULL DEFAULT ''              | 标题                                    |
+| date         | TEXT    | NOT NULL DEFAULT ''              | 发布日期（YYYY-MM-DD）                  |
+| category     | TEXT    | NOT NULL DEFAULT ''              | 分类                                    |
+| description  | TEXT    | NOT NULL DEFAULT ''              | 摘要                                    |
+| tags         | TEXT    | NOT NULL DEFAULT '[]'            | JSON 数组字符串                         |
+| content_md   | TEXT    | NOT NULL DEFAULT ''              | MDX 原文                                |
+| content_html | TEXT    | NOT NULL DEFAULT ''              | 预渲染 HTML（当前未使用，SSR 实时渲染） |
+| updated_at   | TEXT    | NOT NULL DEFAULT datetime('now') | 更新时间                                |
+| published    | INTEGER | NOT NULL DEFAULT 1               | 0 草稿 / 1 已发布                       |
 
 索引：`idx_posts_date(date)`、`idx_posts_published(published)`。
 
 ### comments（评论表）
 
-| 字段        | 类型    | 约束 / 默认                     | 说明                          |
-| ----------- | ------- | ------------------------------- | ----------------------------- |
-| id          | INTEGER | PRIMARY KEY AUTOINCREMENT       | 自增主键                      |
-| post_slug   | TEXT    | NOT NULL                        | 关联文章 slug                 |
-| author      | TEXT    | NOT NULL DEFAULT '匿名'         | 昵称（上限 40 字符）          |
-| email       | TEXT    | NOT NULL DEFAULT ''             | 可选，仅 Gravatar/通知，不公开|
-| body        | TEXT    | NOT NULL DEFAULT ''             | 评论正文（上限 2000 字符）    |
-| created_at  | TEXT    | NOT NULL DEFAULT datetime('now')| 创建时间                      |
-| approved    | INTEGER | NOT NULL DEFAULT 0              | 0 待审核 / 1 已通过           |
+| 字段       | 类型    | 约束 / 默认                      | 说明                           |
+| ---------- | ------- | -------------------------------- | ------------------------------ |
+| id         | INTEGER | PRIMARY KEY AUTOINCREMENT        | 自增主键                       |
+| post_slug  | TEXT    | NOT NULL                         | 关联文章 slug                  |
+| author     | TEXT    | NOT NULL DEFAULT '匿名'          | 昵称（上限 40 字符）           |
+| email      | TEXT    | NOT NULL DEFAULT ''              | 可选，仅 Gravatar/通知，不公开 |
+| body       | TEXT    | NOT NULL DEFAULT ''              | 评论正文（上限 2000 字符）     |
+| created_at | TEXT    | NOT NULL DEFAULT datetime('now') | 创建时间                       |
+| approved   | INTEGER | NOT NULL DEFAULT 0               | 0 待审核 / 1 已通过            |
 
 索引：`idx_comments_slug(post_slug)`、`idx_comments_approved(approved)`。
 
 ### comment_rate（限流表）
 
-| 字段  | 类型    | 约束 / 默认 | 说明                       |
-| ----- | ------- | ----------- | -------------------------- |
-| ip    | TEXT    | NOT NULL    | 读者 IP                    |
-| day   | TEXT    | NOT NULL    | YYYY-MM-DD                 |
-| count | INTEGER | NOT NULL DEFAULT 0 | 当日已提交条数     |
+| 字段  | 类型    | 约束 / 默认        | 说明           |
+| ----- | ------- | ------------------ | -------------- |
+| ip    | TEXT    | NOT NULL           | 读者 IP        |
+| day   | TEXT    | NOT NULL           | YYYY-MM-DD     |
+| count | INTEGER | NOT NULL DEFAULT 0 | 当日已提交条数 |
 
 主键：`PRIMARY KEY (ip, day)`。每 IP 每天上限 10 条。
 
@@ -109,17 +109,17 @@ PR 进度：
 
 所有接口在 `functions/` 下，由 Pages Functions 承载。鉴权统一读 `x-admin-token` header，与 `env.ADMIN_TOKEN` 常量时间比对（`isAdmin`）。CORS 头宽松（`*`），OPTIONS 预检返回 204。
 
-| 路径                          | 方法   | 鉴权     | 用途                                       |
-| ----------------------------- | ------ | -------- | ------------------------------------------ |
-| `/api/comments?slug=xxx`      | GET    | 公共     | 返回该文章已审核通过评论（`approved=1`）   |
-| `/api/comments`               | POST   | 公共     | 提交评论，默认 `approved=0` 待审核；限流  |
-| `/api/admin/comments?status=` | GET    | 管理员   | 列评论（`pending`/`approved`/`all`）       |
-| `/api/admin/comments?action=` | POST   | 管理员   | `action=approve` 通过 / `action=delete` 删除，body `{id}` |
-| `/api/admin/posts`            | GET    | 管理员   | 列文章（不含 `content_md`，省流量）       |
-| `/api/admin/posts`            | POST   | 管理员   | 新建文章，body 见下                        |
-| `/api/admin/posts/:slug`       | GET    | 管理员   | 取单篇（含 `content_md`，`tags` 解析为数组）|
-| `/api/admin/posts/:slug`       | PUT    | 管理员   | 保存修改（动态拼 update，只更新传入字段）  |
-| `/api/admin/posts/:slug`       | DELETE | 管理员   | 删除文章                                   |
+| 路径                          | 方法   | 鉴权   | 用途                                                      |
+| ----------------------------- | ------ | ------ | --------------------------------------------------------- |
+| `/api/comments?slug=xxx`      | GET    | 公共   | 返回该文章已审核通过评论（`approved=1`）                  |
+| `/api/comments`               | POST   | 公共   | 提交评论，默认 `approved=0` 待审核；限流                  |
+| `/api/admin/comments?status=` | GET    | 管理员 | 列评论（`pending`/`approved`/`all`）                      |
+| `/api/admin/comments?action=` | POST   | 管理员 | `action=approve` 通过 / `action=delete` 删除，body `{id}` |
+| `/api/admin/posts`            | GET    | 管理员 | 列文章（不含 `content_md`，省流量）                       |
+| `/api/admin/posts`            | POST   | 管理员 | 新建文章，body 见下                                       |
+| `/api/admin/posts/:slug`      | GET    | 管理员 | 取单篇（含 `content_md`，`tags` 解析为数组）              |
+| `/api/admin/posts/:slug`      | PUT    | 管理员 | 保存修改（动态拼 update，只更新传入字段）                 |
+| `/api/admin/posts/:slug`      | DELETE | 管理员 | 删除文章                                                  |
 
 新建 / 编辑 body 字段：`slug`（仅新建）、`title`、`date`、`category`、`description`、`tags: string[]`、`content_md`、`published: 0|1`。
 
@@ -176,24 +176,24 @@ Edge SSR 直接读 D1 渲染（functions/blog/[[path]].ts）
 
 D1 脚本说明：
 
-| 脚本         | 作用                                              |
-| ------------ | ------------------------------------------------- |
-| `db:local`   | 在本地 D1（`.wrangler/state`）执行 `0001_init.sql` |
-| `db:init`    | 在远程 D1 执行 `0001_init.sql`（首次初始化）      |
-| `db:export`  | 单独跑导出，便于本地预览                           |
-| `db:import`  | 一次性迁移：本地 `content/blog/*.mdx` 导入 D1      |
-| `db:query`   | 临时查询，`--command` 接 SQL                        |
+| 脚本        | 作用                                               |
+| ----------- | -------------------------------------------------- |
+| `db:local`  | 在本地 D1（`.wrangler/state`）执行 `0001_init.sql` |
+| `db:init`   | 在远程 D1 执行 `0001_init.sql`（首次初始化）       |
+| `db:export` | 单独跑导出，便于本地预览                           |
+| `db:import` | 一次性迁移：本地 `content/blog/*.mdx` 导入 D1      |
+| `db:query`  | 临时查询，`--command` 接 SQL                       |
 
 `import-posts-to-d1.mjs` 仅首次迁移用，之后以 D1 为准（写作后台编辑）。它生成临时 SQL 文件（含单引号转义），`wrangler d1 --file` 执行，幂等（先 DELETE 后 INSERT）。
 
 ## 7. 环境变量
 
-| 变量                     | 用途                                       | 本地（.dev.vars）        | Cloudflare Dashboard    |
-| ------------------------ | ------------------------------------------ | ------------------------ | ----------------------- |
-| `ADMIN_TOKEN`            | 管理后台口令，`isAdmin` 比对                | 自设任意串               | 自设强随机串            |
-| `ASSETS`                 | Pages 静态资源 binding，SSR 取静态页 CSS 用 | 自动注入，无需配         | 自动注入，无需配        |
-| `NEXT_PUBLIC_BASE_PATH`  | Next.js basePath，根路径部署留空串         | `/yuyeyyy.github.io` 或不设 | `""`（根路径）        |
-| `NEXT_PUBLIC_SITE_URL`   | 站点根 URL（含 basePath），SEO/RSS/OG 用   | `https://yuyeyyy01.github.io/yuyeyyy.github.io` | `https://你的域名` |
+| 变量                    | 用途                                        | 本地（.dev.vars）                               | Cloudflare Dashboard |
+| ----------------------- | ------------------------------------------- | ----------------------------------------------- | -------------------- |
+| `ADMIN_TOKEN`           | 管理后台口令，`isAdmin` 比对                | 自设任意串                                      | 自设强随机串         |
+| `ASSETS`                | Pages 静态资源 binding，SSR 取静态页 CSS 用 | 自动注入，无需配                                | 自动注入，无需配     |
+| `NEXT_PUBLIC_BASE_PATH` | Next.js basePath，根路径部署留空串          | `/yuyeyyy.github.io` 或不设                     | `""`（根路径）       |
+| `NEXT_PUBLIC_SITE_URL`  | 站点根 URL（含 basePath），SEO/RSS/OG 用    | `https://yuyeyyy01.github.io/yuyeyyy.github.io` | `https://你的域名`   |
 
 区分：
 
@@ -261,19 +261,19 @@ NEXT_PUBLIC_SITE_URL=http://localhost:8788/yuyeyyy.github.io
 
 ## 10. 根路径迁移步骤
 
-域名方案已定：**Cloudflare Pages 默认 `*.pages.dev` 域名**（项目名 `yuyepage` → `https://yuyepage.pages.dev`）。
+域名方案已定：**Cloudflare Pages 默认 `*.pages.dev` 域名**（项目名 `yuyepage` → `https://yuyepage-3yi.pages.dev`）。
 
 代码侧已就绪（环境变量驱动，不改默认值以保 GitHub Pages 过渡期可用）：
 
 - `lib/site.ts`：`BASE_PATH` 优先读 `NEXT_PUBLIC_BASE_PATH`，未设回退 `/yuyeyyy.github.io`；`SITE_URL` 同理。
-- `package.json` 新增 `cf:deploy:root` 脚本：显式注入 `NEXT_PUBLIC_BASE_PATH=""` + `NEXT_PUBLIC_SITE_URL=https://yuyepage.pages.dev` 一键根路径部署。
+- `package.json` 新增 `cf:deploy:root` 脚本：显式注入 `NEXT_PUBLIC_BASE_PATH=""` + `NEXT_PUBLIC_SITE_URL=https://yuyepage-3yi.pages.dev` 一键根路径部署。
 - `.github/workflows/deploy.yml`（原 GitHub Pages workflow，后曾用于 `repository_dispatch` 触发重建）**已删除**，全站切到 Cloudflare Pages，博客走 SSR 不需重建。
 
 正式切换清单：
 
 - [ ] 在 Cloudflare Pages Dashboard 创建项目 `yuyepage`，绑定 `yuyepage_db` D1（`wrangler.toml` 已配）。
-- [ ] Dashboard 环境变量设 `NEXT_PUBLIC_BASE_PATH=""`、`NEXT_PUBLIC_SITE_URL=https://yuyepage.pages.dev`、`ADMIN_TOKEN=<强口令>`。（无需 `DEPLOY_HOOK_URL`，博客走 SSR。）
-- [ ] 首次 `npm run cf:deploy:root`（或 `cf:deploy`，依赖 dashboard 环境变量）部署到 `yuyepage.pages.dev`。
+- [ ] Dashboard 环境变量设 `NEXT_PUBLIC_BASE_PATH=""`、`NEXT_PUBLIC_SITE_URL=https://yuyepage-3yi.pages.dev`、`ADMIN_TOKEN=<强口令>`。（无需 `DEPLOY_HOOK_URL`，博客走 SSR。）
+- [ ] 首次 `npm run cf:deploy:root`（或 `cf:deploy`，依赖 dashboard 环境变量）部署到 `yuyepage-3yi.pages.dev`。
 - [ ] 验证站点 + `/admin` + `/api/comments` + `/blog/*` SSR 正常。
 - [ ] 验证"后台保存文章 → 1 分钟后前台可见"SSR 闭环（无需任何部署/重建）。
 - [ ] （可选）`lib/site.ts` 回退默认值改为根路径，彻底告别子路径。

@@ -32,7 +32,7 @@ export const PRESETS: Record<string, PBRParams> = {
   },
   铜: {
     albedo: "#f0835a",
-    roughness: 0.30,
+    roughness: 0.3,
     metallic: 1.0,
     F0: 0.04,
     normalStrength: 0.0,
@@ -59,7 +59,17 @@ export const PRESETS: Record<string, PBRParams> = {
 /** hex → [r,g,b] 0..1 */
 export function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const full =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
   const num = parseInt(full, 16);
-  return [((num >> 16) & 255) / 255, ((num >> 8) & 255) / 255, (num & 255) / 255];
+  return [
+    ((num >> 16) & 255) / 255,
+    ((num >> 8) & 255) / 255,
+    (num & 255) / 255,
+  ];
 }

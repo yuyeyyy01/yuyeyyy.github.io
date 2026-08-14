@@ -276,9 +276,7 @@ export default function Comments({ slug }: CommentsProps) {
           <p
             className={cn(
               "text-sm",
-              msg.kind === "ok"
-                ? "text-[var(--accent)]"
-                : "text-red-500",
+              msg.kind === "ok" ? "text-[var(--accent)]" : "text-red-500",
             )}
           >
             {msg.text}

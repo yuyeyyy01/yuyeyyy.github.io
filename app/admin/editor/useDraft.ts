@@ -54,21 +54,24 @@ export function useDraft(slug: string, initial?: Partial<DraftData>) {
   }, [slug]);
 
   /** 定时把当前编辑内容存草稿 */
-  const saveDraft = useCallback((data: Omit<DraftData, "ts">) => {
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => {
-      const full: DraftData = { ...data, ts: Date.now() };
-      latest.current = full;
-      try {
-        // 新建文章（hook slug 为空）统一存 "new-post"；已存在文章用其 slug。
-        // 避免用户输入新 slug 时存到不同 key，导致 clearDraft（用 hook slug）清不到。
-        localStorage.setItem(key(slug), JSON.stringify(full));
-      } catch {
-        /* localStorage 满/禁用，静默 */
-      }
-    }, DEBOUNCE_MS);
-    setDirty(true);
-  }, [slug]);
+  const saveDraft = useCallback(
+    (data: Omit<DraftData, "ts">) => {
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => {
+        const full: DraftData = { ...data, ts: Date.now() };
+        latest.current = full;
+        try {
+          // 新建文章（hook slug 为空）统一存 "new-post"；已存在文章用其 slug。
+          // 避免用户输入新 slug 时存到不同 key，导致 clearDraft（用 hook slug）清不到。
+          localStorage.setItem(key(slug), JSON.stringify(full));
+        } catch {
+          /* localStorage 满/禁用，静默 */
+        }
+      }, DEBOUNCE_MS);
+      setDirty(true);
+    },
+    [slug],
+  );
 
   /** 恢复草稿内容到编辑器（由调用方 set 各字段） */
   const restoreDraft = useCallback((): DraftData | null => {

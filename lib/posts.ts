@@ -134,9 +134,10 @@ export function getPostsByTag(tag: string): Post[] {
  * 返回当前文章的上一篇（较新）和下一篇（较旧）。
  * 依赖 getAllPosts 的 date 降序排列。
  */
-export function getAdjacentPosts(
-  slug: string,
-): { prev: Post | null; next: Post | null } {
+export function getAdjacentPosts(slug: string): {
+  prev: Post | null;
+  next: Post | null;
+} {
   const posts = getAllPosts();
   const index = posts.findIndex((p) => p.slug === slug);
   if (index === -1) {

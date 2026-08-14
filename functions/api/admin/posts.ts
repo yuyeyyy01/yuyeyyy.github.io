@@ -32,7 +32,8 @@ interface PostInput {
 /** 列文章（不带正文，省流量） */
 export const onRequestGet: PagesFunction<EnvContext["env"]> = async (ctx) => {
   if (ctx.request.method === "OPTIONS") return corsPreflight();
-  if (!(await isAdmin(ctx.env, ctx.request))) return json({ error: "未授权" }, 401);
+  if (!(await isAdmin(ctx.env, ctx.request)))
+    return json({ error: "未授权" }, 401);
 
   const result = await ctx.env.yuyepage_db
     .prepare(
@@ -46,7 +47,8 @@ export const onRequestGet: PagesFunction<EnvContext["env"]> = async (ctx) => {
 /** 新建文章 */
 export const onRequestPost: PagesFunction<EnvContext["env"]> = async (ctx) => {
   if (ctx.request.method === "OPTIONS") return corsPreflight();
-  if (!(await isAdmin(ctx.env, ctx.request))) return json({ error: "未授权" }, 401);
+  if (!(await isAdmin(ctx.env, ctx.request)))
+    return json({ error: "未授权" }, 401);
 
   let data: PostInput;
   try {
@@ -62,7 +64,10 @@ export const onRequestPost: PagesFunction<EnvContext["env"]> = async (ctx) => {
 
   const db = ctx.env.yuyepage_db;
   // 检查是否已存在
-  const exists = await db.prepare("SELECT slug FROM posts WHERE slug = ?").bind(slug).first();
+  const exists = await db
+    .prepare("SELECT slug FROM posts WHERE slug = ?")
+    .bind(slug)
+    .first();
   if (exists) return json({ error: "slug 已存在" }, 409);
 
   await db

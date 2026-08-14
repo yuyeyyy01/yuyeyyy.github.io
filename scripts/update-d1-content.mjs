@@ -42,17 +42,25 @@ function main() {
     // 只更新 content_md，保留其他字段
     sql += `UPDATE posts SET content_md = ${sqlStr(content)} WHERE slug = ${sqlStr(slug)};\n`;
     // 打印改动证据：demo 标签
-    const tags = content.match(/<(PlaygroundPBR|PlaygroundSSS|PlaygroundHair|ShaderDemo|Scene)[\s\S]*?\/?>/g) || [];
+    const tags =
+      content.match(
+        /<(PlaygroundPBR|PlaygroundSSS|PlaygroundHair|ShaderDemo|Scene)[\s\S]*?\/?>/g,
+      ) || [];
     console.log(`  ${slug}: ${tags.join(" ")}`);
   }
 
   writeFileSync(TMP_SQL, sql, "utf-8");
   const remoteFlag = process.env.D1_REMOTE === "1" ? "--remote" : "";
-  console.log(`\n执行 wrangler d1 execute ${remoteFlag ? "(远程) " : "(本地) "}...`);
+  console.log(
+    `\n执行 wrangler d1 execute ${remoteFlag ? "(远程) " : "(本地) "}...`,
+  );
   try {
-    execSync(`npx wrangler d1 execute yuyepage-db ${remoteFlag} --file=${TMP_SQL} -y`, {
-      stdio: "inherit",
-    });
+    execSync(
+      `npx wrangler d1 execute yuyepage-db ${remoteFlag} --file=${TMP_SQL} -y`,
+      {
+        stdio: "inherit",
+      },
+    );
     console.log("✅ D1 content_md 更新完成");
   } finally {
     try {

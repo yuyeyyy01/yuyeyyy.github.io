@@ -48,13 +48,18 @@ for (const rel of targets) {
     const visit = (node) => {
       if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) jsxOpen++;
       if (
-        (ts.isVariableStatement(node) || ts.isFunctionDeclaration(node) || ts.isInterfaceDeclaration(node)) &&
+        (ts.isVariableStatement(node) ||
+          ts.isFunctionDeclaration(node) ||
+          ts.isInterfaceDeclaration(node)) &&
         node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)
       ) {
-        if (ts.isFunctionDeclaration(node) && node.name) exports.push(node.name.text);
+        if (ts.isFunctionDeclaration(node) && node.name)
+          exports.push(node.name.text);
         else if (ts.isInterfaceDeclaration(node)) exports.push(node.name.text);
         else if (ts.isVariableStatement(node))
-          node.declarationList.declarations.forEach((d) => exports.push(d.name.getText(sf)));
+          node.declarationList.declarations.forEach((d) =>
+            exports.push(d.name.getText(sf)),
+          );
       }
       ts.forEachChild(node, visit);
     };

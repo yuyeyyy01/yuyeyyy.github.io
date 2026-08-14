@@ -1,12 +1,10 @@
 ---
-title: "Kajiya-Kay & \"类 Marschner\" 头发高光"
+title: 'Kajiya-Kay & "类 Marschner" 头发高光'
 date: "2025-11-05"
 category: "Hair"
-description: "Kajiya-Kay & \"类 Marschner\" 头发高光"
+description: 'Kajiya-Kay & "类 Marschner" 头发高光'
 tags: ["Hair", "Kajiya-Kay", "Marschner", "Shader"]
 ---
-
-
 
 > 本文对比 Kajiya-Kay 经典头发高光模型与「类 Marschner」基于方位角函数的实现，记录两者差异与切换成本。
 
@@ -156,11 +154,11 @@ float spec_TT = M_TT * N_TT * Fresnel_TT(cosThetaI);
 
 在 URP（移动端 GLES 3.2）实测：
 
-| 方案 | ALU/像素 | 贴图采样 | 效果 |
-|---|---|---|---|
-| Kajiya-Kay 双高光 | ~25 | 1（发色图） | 过得去，高光位置对，形态偏窄 |
-| 类 Marschner (R+TT) | ~60 | 1 | 接近真 Marschner，TT 透光稍弱 |
-| 完整 Marschner | ~150+ | 1~2 | 最好，移动端掉帧 |
+| 方案                | ALU/像素 | 贴图采样    | 效果                          |
+| ------------------- | -------- | ----------- | ----------------------------- |
+| Kajiya-Kay 双高光   | ~25      | 1（发色图） | 过得去，高光位置对，形态偏窄  |
+| 类 Marschner (R+TT) | ~60      | 1           | 接近真 Marschner，TT 透光稍弱 |
+| 完整 Marschner      | ~150+    | 1~2         | 最好，移动端掉帧              |
 
 Kajiya-Kay 的优势是**只要一个 power**，ALU 极低；劣势是高光形态固定为一条窄带，没有 TT 的
 透光（所以背光面头发发黑，要靠 wrap diffuse 补）。类 Marschner 多了 TT 项和高斯拟合，ALU 翻倍但
@@ -201,4 +199,3 @@ $$
 下面是一段头发高光随光源实时旋转的视频记录：
 
 <Video bilibili="BV1EfJ56ZEyM" caption="头发高光实时旋转" />
-

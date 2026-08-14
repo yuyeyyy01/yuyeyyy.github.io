@@ -13,7 +13,13 @@ import Editor from "./Editor";
  */
 export default function EditorPage() {
   return (
-    <Suspense fallback={<div className="container-page py-20 text-sm text-[var(--foreground-muted)]">加载编辑器…</div>}>
+    <Suspense
+      fallback={
+        <div className="container-page py-20 text-sm text-[var(--foreground-muted)]">
+          加载编辑器…
+        </div>
+      }
+    >
       <Editor />
     </Suspense>
   );

@@ -40,7 +40,9 @@ export default function HeroShader({ mouseRef }: HeroShaderProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const reduced = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     const glCtx = canvas.getContext("webgl2", {
       antialias: false,
@@ -225,11 +227,7 @@ export default function HeroShader({ mouseRef }: HeroShaderProps) {
 
   return (
     <div className="absolute inset-0 z-0 bg-[var(--background)]">
-      <canvas
-        ref={canvasRef}
-        aria-hidden
-        className="block h-full w-full"
-      />
+      <canvas ref={canvasRef} aria-hidden className="block h-full w-full" />
     </div>
   );
 }

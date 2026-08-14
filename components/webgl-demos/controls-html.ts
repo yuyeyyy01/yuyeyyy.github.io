@@ -10,12 +10,12 @@
  *   - 容器 column flex，gap 0.5rem，padding 0.75rem 1rem，border-top
  */
 
-import type { UniformDef } from './shaders';
+import type { UniformDef } from "./shaders";
 
 /** [r,g,b] 0..1 → #rrggbb（与 LabControls.rgbToHex 同逻辑） */
 function rgbToHex(rgb: [number, number, number]): string {
   const to255 = (v: number) => Math.round(Math.max(0, Math.min(1, v)) * 255);
-  const h = (n: number) => to255(n).toString(16).padStart(2, '0');
+  const h = (n: number) => to255(n).toString(16).padStart(2, "0");
   return `#${h(rgb[0])}${h(rgb[1])}${h(rgb[2])}`;
 }
 
@@ -29,29 +29,44 @@ function rgbToHex(rgb: [number, number, number]): string {
  * float 控件：range input + 数值 span，input 事件触发 'uniform-change' CustomEvent。
  * color 控件：color input，hex → [r,g,b] 0..1 触发 'uniform-change' CustomEvent。
  */
-export function renderControlsHTML(opts: { canvasId: string; uniforms: UniformDef[] }): string {
+export function renderControlsHTML(opts: {
+  canvasId: string;
+  uniforms: UniformDef[];
+}): string {
   const { canvasId, uniforms } = opts;
 
   // 行 / 标签 / 数值 span 的内联样式，对齐 LabControls 视觉
   const rowStyle =
-    'display:flex;align-items:center;gap:0.75rem;font-family:var(--font-mono),monospace;font-size:0.75rem;';
-  const labelStyle = 'color:var(--foreground-soft);min-width:64px;';
-  const valueStyle = 'color:var(--foreground-muted);min-width:40px;text-align:right;';
+    "display:flex;align-items:center;gap:0.75rem;font-family:var(--font-mono),monospace;font-size:0.75rem;";
+  const labelStyle = "color:var(--foreground-soft);min-width:64px;";
+  const valueStyle =
+    "color:var(--foreground-muted);min-width:40px;text-align:right;";
 
   const rows: string[] = [];
   for (const u of uniforms) {
     const label = u.label ?? u.name;
 
-    if (u.kind === 'color') {
+    if (u.kind === "color") {
       const def = u.default as [number, number, number];
       const hex = rgbToHex(def);
       rows.push(
-        '<label class="control-row" style="' + rowStyle + '">' +
-          '<span class="control-label" style="' + labelStyle + '">' + label + '</span>' +
-          '<input type="color" value="' + hex + '" data-uniform="' + u.name +
-          '" data-canvas="' + canvasId + '" class="control-color" ' +
+        '<label class="control-row" style="' +
+          rowStyle +
+          '">' +
+          '<span class="control-label" style="' +
+          labelStyle +
+          '">' +
+          label +
+          "</span>" +
+          '<input type="color" value="' +
+          hex +
+          '" data-uniform="' +
+          u.name +
+          '" data-canvas="' +
+          canvasId +
+          '" class="control-color" ' +
           'style="width:32px;height:24px;border:1px solid var(--border);border-radius:4px;background:transparent;cursor:pointer;" />' +
-          '</label>'
+          "</label>",
       );
     } else {
       const min = u.min ?? 0;
@@ -59,22 +74,43 @@ export function renderControlsHTML(opts: { canvasId: string; uniforms: UniformDe
       const step = u.step ?? 0.01;
       const def = u.default as number;
       rows.push(
-        '<label class="control-row" style="' + rowStyle + '">' +
-          '<span class="control-label" style="' + labelStyle + '">' + label + '</span>' +
-          '<input type="range" min="' + min + '" max="' + max + '" step="' + step +
-          '" value="' + def + '" data-uniform="' + u.name + '" data-canvas="' + canvasId +
+        '<label class="control-row" style="' +
+          rowStyle +
+          '">' +
+          '<span class="control-label" style="' +
+          labelStyle +
+          '">' +
+          label +
+          "</span>" +
+          '<input type="range" min="' +
+          min +
+          '" max="' +
+          max +
+          '" step="' +
+          step +
+          '" value="' +
+          def +
+          '" data-uniform="' +
+          u.name +
+          '" data-canvas="' +
+          canvasId +
           '" class="control-slider" style="flex:1;accent-color:var(--accent);" />' +
-          '<span class="control-value" data-value-for="' + u.name + '" style="' + valueStyle + '">' +
-          def + '</span>' +
-          '</label>'
+          '<span class="control-value" data-value-for="' +
+          u.name +
+          '" style="' +
+          valueStyle +
+          '">' +
+          def +
+          "</span>" +
+          "</label>",
       );
     }
   }
 
   // 容器样式：参考 LabControls 的 flex column + gap + padding + border-top
   const containerStyle =
-    'display:flex;flex-direction:column;gap:0.5rem;padding:0.75rem 1rem;' +
-    'border-top:1px solid var(--border);background:var(--background);';
+    "display:flex;flex-direction:column;gap:0.5rem;padding:0.75rem 1rem;" +
+    "border-top:1px solid var(--border);background:var(--background);";
 
   // 事件绑定 IIFE：在浏览器执行，监听 input 事件并 dispatch 'uniform-change' CustomEvent
   // 注意：<\/script> 在 TS 字符串中求值为 </script>，源码层面避免字面 </script> 触发某些工具误判
@@ -103,9 +139,11 @@ canvas.dispatchEvent(new CustomEvent('uniform-change',{detail:{name:name,value:v
 })();<\/script>`;
 
   return (
-    '<div class="demo-controls" style="' + containerStyle + '">' +
-    rows.join('') +
+    '<div class="demo-controls" style="' +
+    containerStyle +
+    '">' +
+    rows.join("") +
     script +
-    '</div>'
+    "</div>"
   );
 }

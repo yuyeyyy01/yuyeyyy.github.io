@@ -68,8 +68,24 @@ void main() {
 `;
 
 const PBR_UNIFORMS: UniformDef[] = [
-  { name: "uRoughness", label: "粗糙度", kind: "float", min: 0.02, max: 1, step: 0.01, default: 0.4 },
-  { name: "uMetallic", label: "金属度", kind: "float", min: 0, max: 1, step: 0.01, default: 0 },
+  {
+    name: "uRoughness",
+    label: "粗糙度",
+    kind: "float",
+    min: 0.02,
+    max: 1,
+    step: 0.01,
+    default: 0.4,
+  },
+  {
+    name: "uMetallic",
+    label: "金属度",
+    kind: "float",
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0,
+  },
 ];
 
 // SSS 厚度：thickness / tint 滑块，呼应 skin-sss-thickness-lut.mdx
@@ -93,7 +109,15 @@ void main() {
 `;
 
 const SSS_UNIFORMS: UniformDef[] = [
-  { name: "uThickness", label: "厚度", kind: "float", min: 0, max: 1, step: 0.01, default: 0.6 },
+  {
+    name: "uThickness",
+    label: "厚度",
+    kind: "float",
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.6,
+  },
   { name: "uTint", label: "透射色", kind: "color", default: [0.9, 0.3, 0.3] },
 ];
 
@@ -121,7 +145,15 @@ void main() {
 `;
 
 const HAIR_UNIFORMS: UniformDef[] = [
-  { name: "uShift", label: "高光偏移", kind: "float", min: 1, max: 32, step: 0.5, default: 8 },
+  {
+    name: "uShift",
+    label: "高光偏移",
+    kind: "float",
+    min: 1,
+    max: 32,
+    step: 0.5,
+    default: 8,
+  },
 ];
 
 export const DEMOS: Record<string, DemoDef> = {

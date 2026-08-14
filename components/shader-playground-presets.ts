@@ -48,8 +48,24 @@ void main() {
 `;
 
 export const PBR_UNIFORMS: UniformControl[] = [
-  { name: "uRoughness", label: "粗糙度", kind: "float", min: 0.02, max: 1, step: 0.01, default: 0.4 },
-  { name: "uMetallic", label: "金属度", kind: "float", min: 0, max: 1, step: 0.01, default: 0 },
+  {
+    name: "uRoughness",
+    label: "粗糙度",
+    kind: "float",
+    min: 0.02,
+    max: 1,
+    step: 0.01,
+    default: 0.4,
+  },
+  {
+    name: "uMetallic",
+    label: "金属度",
+    kind: "float",
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0,
+  },
 ];
 
 // SSS 厚度：thickness / tint 滑块，呼应 skin-sss-thickness-lut.mdx
@@ -73,8 +89,21 @@ void main() {
 `;
 
 export const SSS_UNIFORMS: UniformControl[] = [
-  { name: "uThickness", label: "厚度", kind: "float", min: 0, max: 1, step: 0.01, default: 0.6 },
-  { name: "uTint", label: "透射色", kind: "color", default: [0.9, 0.3, 0.3] as [number, number, number] },
+  {
+    name: "uThickness",
+    label: "厚度",
+    kind: "float",
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.6,
+  },
+  {
+    name: "uTint",
+    label: "透射色",
+    kind: "color",
+    default: [0.9, 0.3, 0.3] as [number, number, number],
+  },
 ];
 
 // Hair Kajiya-Kay：shift 滑块控制高光偏移，呼应 kajiya-kay-marschner-hair.mdx
@@ -101,7 +130,15 @@ void main() {
 `;
 
 export const HAIR_UNIFORMS: UniformControl[] = [
-  { name: "uShift", label: "高光偏移", kind: "float", min: 1, max: 32, step: 0.5, default: 8 },
+  {
+    name: "uShift",
+    label: "高光偏移",
+    kind: "float",
+    min: 1,
+    max: 32,
+    step: 0.5,
+    default: 8,
+  },
 ];
 
 export const PLAYGROUND_PRESETS: Record<string, PlaygroundPreset> = {

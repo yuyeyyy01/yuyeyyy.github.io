@@ -22,7 +22,13 @@ type Tab = "comments" | "posts";
 
 export default function AdminPage() {
   return (
-    <Suspense fallback={<div className="container-page py-20 text-sm text-[var(--foreground-muted)]">加载…</div>}>
+    <Suspense
+      fallback={
+        <div className="container-page py-20 text-sm text-[var(--foreground-muted)]">
+          加载…
+        </div>
+      }
+    >
       <AdminInner />
     </Suspense>
   );
@@ -37,7 +43,8 @@ function AdminInner() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const searchParams = useSearchParams();
-  const initialTab: Tab = searchParams.get("tab") === "posts" ? "posts" : "comments";
+  const initialTab: Tab =
+    searchParams.get("tab") === "posts" ? "posts" : "comments";
   const [tab, setTab] = useState<Tab>(initialTab);
 
   // 加载时探测 cookie 登录态
@@ -114,10 +121,11 @@ function AdminInner() {
               autoComplete="current-password"
               className="input text-sm"
             />
-            {error ? (
-              <p className="text-sm text-red-500">{error}</p>
-            ) : null}
-            <button type="submit" className="btn-primary w-full px-5 py-2 text-sm">
+            {error ? <p className="text-sm text-red-500">{error}</p> : null}
+            <button
+              type="submit"
+              className="btn-primary w-full px-5 py-2 text-sm"
+            >
               登录
             </button>
           </form>
@@ -175,14 +183,22 @@ function TabBtn({
 function CommentAdmin() {
   const apiPath = api("/api/admin/comments");
   const [pending, setPending] = useState<
-    { id: number; post_slug: string; author: string; body: string; created_at: string }[]
+    {
+      id: number;
+      post_slug: string;
+      author: string;
+      body: string;
+      created_at: string;
+    }[]
   >([]);
   const [loading, setLoading] = useState(true);
 
   async function loadPending() {
     setLoading(true);
     try {
-      const res = await fetch(`${apiPath}?status=pending`, { credentials: "include" });
+      const res = await fetch(`${apiPath}?status=pending`, {
+        credentials: "include",
+      });
       const d = (await res.json()) as { comments?: typeof pending };
       setPending(d.comments ?? []);
     } finally {
@@ -220,7 +236,9 @@ function CommentAdmin() {
       {loading ? (
         <p className="mt-3 text-sm text-[var(--foreground-muted)]">加载中…</p>
       ) : pending.length === 0 ? (
-        <p className="mt-3 text-sm text-[var(--foreground-muted)]">没有待审核评论</p>
+        <p className="mt-3 text-sm text-[var(--foreground-muted)]">
+          没有待审核评论
+        </p>
       ) : (
         <ul className="mt-3 space-y-3">
           {pending.map((c) => (
@@ -229,7 +247,9 @@ function CommentAdmin() {
               className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4"
             >
               <div className="flex items-baseline justify-between gap-3">
-                <span className="text-sm font-medium">{c.author || "匿名"}</span>
+                <span className="text-sm font-medium">
+                  {c.author || "匿名"}
+                </span>
                 <span className="text-xs text-[var(--foreground-muted)]">
                   {c.post_slug}
                 </span>

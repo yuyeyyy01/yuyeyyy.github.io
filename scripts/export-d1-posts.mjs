@@ -13,7 +13,10 @@ const MANIFEST = "content/blog/.d1-export.json"; // 标记哪些文件是导出�
 
 function run(sql) {
   const cmd = `npx wrangler d1 execute yuyepage-db --json --command "${sql.replace(/"/g, '\\"')}"`;
-  const out = execSync(cmd, { encoding: "utf-8", stdio: ["pipe", "pipe", "pipe"] });
+  const out = execSync(cmd, {
+    encoding: "utf-8",
+    stdio: ["pipe", "pipe", "pipe"],
+  });
   // wrangler --json 输出：找到 JSON 数组
   const start = out.indexOf("[");
   if (start === -1) return [];
@@ -31,7 +34,9 @@ function toMdx(p) {
       return [];
     }
   })();
-  const tagsYaml = tags.length ? `\ntags: [${tags.map((t) => `"${t}"`).join(", ")}]` : "";
+  const tagsYaml = tags.length
+    ? `\ntags: [${tags.map((t) => `"${t}"`).join(", ")}]`
+    : "";
   return `---
 title: ${JSON.stringify(p.title || p.slug)}
 date: ${JSON.stringify(p.date || "")}
@@ -59,7 +64,9 @@ function main() {
     } catch {}
   }
 
-  const posts = run("SELECT slug, title, date, category, description, tags, content_md FROM posts WHERE published = 1");
+  const posts = run(
+    "SELECT slug, title, date, category, description, tags, content_md FROM posts WHERE published = 1",
+  );
   console.log(`从 D1 导出 ${posts.length} 篇文章`);
 
   const exported = [];

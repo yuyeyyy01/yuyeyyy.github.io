@@ -51,7 +51,8 @@ export const GLOSSARY: GlossaryItem[] = [
     short: "反射率随观察角度变化的廉价近似。",
     detail:
       "Schlick 近似用菲涅尔反射率 F0 与视线-半程向量夹角计算反射率。掠射角时反射趋近 1，这就是金属边缘高光（rim light）的来源。F0 由材质 IOR 决定。",
-    formula: "F(\\mathbf{v},\\mathbf{h}) = F_0 + (1-F_0)(1-\\mathbf{v}\\cdot\\mathbf{h})^5",
+    formula:
+      "F(\\mathbf{v},\\mathbf{h}) = F_0 + (1-F_0)(1-\\mathbf{v}\\cdot\\mathbf{h})^5",
     relatedTag: "PBR",
   },
   {
@@ -147,8 +148,7 @@ export const GLOSSARY: GlossaryItem[] = [
     short: "描述参与介质中光的散射相位。",
     detail:
       "HG 相位函数用不对称因子 g 控制散射前后倾向：g>0 前向散射（雾、烟），g<0 后向散射（红血球）。它是体积渲染与 SSS 散射核的标准工具。",
-    formula:
-      "p(\\theta) = \\frac{1-g^2}{4\\pi\\,(1+g^2-2g\\cos\\theta)^{3/2}}",
+    formula: "p(\\theta) = \\frac{1-g^2}{4\\pi\\,(1+g^2-2g\\cos\\theta)^{3/2}}",
     relatedTag: "SSS",
   },
   {

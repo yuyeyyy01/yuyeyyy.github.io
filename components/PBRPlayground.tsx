@@ -2,9 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createSphere } from "./pbr/sphere-mesh";
-import { perspective, lookAt, rotateX, rotateY, multiply } from "./pbr/matrices";
+import {
+  perspective,
+  lookAt,
+  rotateX,
+  rotateY,
+  multiply,
+} from "./pbr/matrices";
 import { VERT, FRAG } from "./pbr/shaders";
-import { DEFAULT_PARAMS, PRESETS, hexToRgb, type PBRParams } from "./pbr/presets";
+import {
+  DEFAULT_PARAMS,
+  PRESETS,
+  hexToRgb,
+  type PBRParams,
+} from "./pbr/presets";
 
 /**
  * PBRPlayground —— 手写 Cook-Torrance 实时调参 demo。
@@ -16,7 +27,11 @@ import { DEFAULT_PARAMS, PRESETS, hexToRgb, type PBRParams } from "./pbr/presets
  * 性能关键：shader 一次性编译，滑块改值只调 gl.uniform1f/3f，不重编译。
  */
 
-function compile(gl: WebGL2RenderingContext, type: number, src: string): WebGLShader | null {
+function compile(
+  gl: WebGL2RenderingContext,
+  type: number,
+  src: string,
+): WebGLShader | null {
   const sh = gl.createShader(type)!;
   gl.shaderSource(sh, src);
   gl.compileShader(sh);
@@ -41,7 +56,11 @@ export default function PBRPlayground() {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const glCtx = canvas.getContext("webgl2", { antialias: true, alpha: true, powerPreference: "low-power" });
+    const glCtx = canvas.getContext("webgl2", {
+      antialias: true,
+      alpha: true,
+      powerPreference: "low-power",
+    });
     if (!glCtx) return;
     const gl: WebGL2RenderingContext = glCtx;
     glRef.current = gl;
@@ -157,7 +176,9 @@ export default function PBRPlayground() {
 
   // 用 ref 让 raf 读到最新 autoRotate，不重跑初始化 effect
   const autoRotateRef = useRef(autoRotate);
-  useEffect(() => { autoRotateRef.current = autoRotate; }, [autoRotate]);
+  useEffect(() => {
+    autoRotateRef.current = autoRotate;
+  }, [autoRotate]);
 
   // ---- 滑块改值：只更新 uniform，不重编译 ----
   useEffect(() => {
@@ -187,7 +208,9 @@ export default function PBRPlayground() {
     yawPitch.current[1] -= dy * 0.01;
     yawPitch.current[1] = Math.max(-1.4, Math.min(1.4, yawPitch.current[1]));
   };
-  const onPointerUp = () => { drag.current = null; };
+  const onPointerUp = () => {
+    drag.current = null;
+  };
 
   return (
     <div className="card grid gap-4 overflow-hidden p-0 sm:grid-cols-[18rem_1fr]">
@@ -211,33 +234,71 @@ export default function PBRPlayground() {
                 className="h-7 w-7 rounded-full border border-[var(--border)] transition-transform group-hover:scale-110 group-hover:border-[var(--accent)]"
                 style={{ background: p.albedo }}
               />
-              <span className="font-mono text-[0.6rem] text-[var(--foreground-muted)]">{name}</span>
+              <span className="font-mono text-[0.6rem] text-[var(--foreground-muted)]">
+                {name}
+              </span>
             </button>
           ))}
         </div>
 
         {/* 滑块 */}
-        <Slider label="roughness" value={params.roughness} min={0.02} max={1} step={0.01}
-          onChange={(v) => setParams((p) => ({ ...p, roughness: v }))} />
-        <Slider label="metallic" value={params.metallic} min={0} max={1} step={0.01}
-          onChange={(v) => setParams((p) => ({ ...p, metallic: v }))} />
-        <Slider label="F0" value={params.F0} min={0} max={0.08} step={0.001}
-          onChange={(v) => setParams((p) => ({ ...p, F0: v }))} />
-        <Slider label="normal" value={params.normalStrength} min={0} max={1} step={0.05}
-          onChange={(v) => setParams((p) => ({ ...p, normalStrength: v }))} />
-        <Slider label="ambient" value={params.ambient} min={0} max={0.5} step={0.01}
-          onChange={(v) => setParams((p) => ({ ...p, ambient: v }))} />
+        <Slider
+          label="roughness"
+          value={params.roughness}
+          min={0.02}
+          max={1}
+          step={0.01}
+          onChange={(v) => setParams((p) => ({ ...p, roughness: v }))}
+        />
+        <Slider
+          label="metallic"
+          value={params.metallic}
+          min={0}
+          max={1}
+          step={0.01}
+          onChange={(v) => setParams((p) => ({ ...p, metallic: v }))}
+        />
+        <Slider
+          label="F0"
+          value={params.F0}
+          min={0}
+          max={0.08}
+          step={0.001}
+          onChange={(v) => setParams((p) => ({ ...p, F0: v }))}
+        />
+        <Slider
+          label="normal"
+          value={params.normalStrength}
+          min={0}
+          max={1}
+          step={0.05}
+          onChange={(v) => setParams((p) => ({ ...p, normalStrength: v }))}
+        />
+        <Slider
+          label="ambient"
+          value={params.ambient}
+          min={0}
+          max={0.5}
+          step={0.01}
+          onChange={(v) => setParams((p) => ({ ...p, ambient: v }))}
+        />
 
         {/* albedo 颜色 */}
         <div className="flex items-center gap-3 py-1.5">
-          <span className="w-16 font-mono text-[0.7rem] text-[var(--foreground-muted)]">albedo</span>
+          <span className="w-16 font-mono text-[0.7rem] text-[var(--foreground-muted)]">
+            albedo
+          </span>
           <input
             type="color"
             value={params.albedo}
-            onChange={(e) => setParams((p) => ({ ...p, albedo: e.target.value }))}
+            onChange={(e) =>
+              setParams((p) => ({ ...p, albedo: e.target.value }))
+            }
             className="h-6 w-10 cursor-pointer rounded border border-[var(--border)] bg-transparent"
           />
-          <span className="font-mono text-[0.7rem] text-[var(--foreground-muted)]">{params.albedo}</span>
+          <span className="font-mono text-[0.7rem] text-[var(--foreground-muted)]">
+            {params.albedo}
+          </span>
         </div>
 
         {/* 自动旋转 */}
@@ -248,7 +309,9 @@ export default function PBRPlayground() {
             onChange={(e) => setAutoRotate(e.target.checked)}
             className="accent-[var(--accent)]"
           />
-          <span className="font-mono text-[0.7rem] text-[var(--foreground-muted)]">auto-rotate</span>
+          <span className="font-mono text-[0.7rem] text-[var(--foreground-muted)]">
+            auto-rotate
+          </span>
         </label>
       </div>
 
@@ -263,7 +326,8 @@ export default function PBRPlayground() {
           className="block h-full w-full"
         />
         <span className="pointer-events-none absolute left-3 top-2 font-mono text-[0.65rem] text-[var(--foreground-muted)]">
-          <span className="text-[var(--accent)]">§</span> preview · drag to rotate
+          <span className="text-[var(--accent)]">§</span> preview · drag to
+          rotate
         </span>
       </div>
     </div>
@@ -287,7 +351,9 @@ function Slider({
 }) {
   return (
     <div className="flex items-center gap-3 py-1.5">
-      <span className="w-16 font-mono text-[0.7rem] text-[var(--foreground-muted)]">{label}</span>
+      <span className="w-16 font-mono text-[0.7rem] text-[var(--foreground-muted)]">
+        {label}
+      </span>
       <input
         type="range"
         min={min}

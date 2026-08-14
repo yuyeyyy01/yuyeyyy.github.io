@@ -24,9 +24,7 @@ export default function Footer() {
       className="border-t border-[var(--border)] py-10"
     >
       <div className="container-page text-xs text-[var(--foreground-muted)]">
-        <p>
-          © {year ?? ""} Yuyeyyy · 用 Unity 渲染与 Shader 折腾的笔记
-        </p>
+        <p>© {year ?? ""} Yuyeyyy · 用 Unity 渲染与 Shader 折腾的笔记</p>
       </div>
     </motion.footer>
   );

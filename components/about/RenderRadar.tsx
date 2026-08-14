@@ -120,12 +120,7 @@ export default function RenderRadar() {
                 }}
               >
                 {/* 透明热区圆点，便于点击 */}
-                <circle
-                  cx={p.x}
-                  cy={p.y}
-                  r={6}
-                  fill="transparent"
-                />
+                <circle cx={p.x} cy={p.y} r={6} fill="transparent" />
                 {/* 实心顶点 */}
                 <circle
                   cx={p.x}

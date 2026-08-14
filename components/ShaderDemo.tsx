@@ -13,7 +13,10 @@ export default function ShaderDemo({ className }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!ref.current) return;
-    mountHTMLString(renderShaderHTML({ demoId: "shader-demo", canvasId, height: 320 }), ref.current);
+    mountHTMLString(
+      renderShaderHTML({ demoId: "shader-demo", canvasId, height: 320 }),
+      ref.current,
+    );
   }, [canvasId]);
   return <div ref={ref} className={className} />;
 }

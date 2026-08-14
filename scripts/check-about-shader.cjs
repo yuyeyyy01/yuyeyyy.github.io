@@ -30,9 +30,7 @@ const glsl = PRELUDE + m[1];
 
 // 剥离注释后的版本，用于符号分析 —— 否则注释里的 O(1)、f(x) 等
 // 会被误判成函数调用
-const code = glsl
-  .replace(/\/\*[\s\S]*?\*\//g, "")
-  .replace(/\/\/.*$/gm, "");
+const code = glsl.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 
 const errors = [];
 
@@ -54,7 +52,9 @@ const lines = glsl.split("\n");
 lines.forEach((ln, i) => {
   const stripped = ln.replace(/\/\/.*$/, "");
   if (/^\s*uniform\s/.test(stripped) && depth !== 0) {
-    errors.push(`第 ${i + 1} 行 uniform 出现在函数体内（depth=${depth}）: ${ln.trim()}`);
+    errors.push(
+      `第 ${i + 1} 行 uniform 出现在函数体内（depth=${depth}）: ${ln.trim()}`,
+    );
   }
   for (const ch of stripped) {
     if (ch === "{") depth++;
@@ -69,7 +69,8 @@ if (!/fragColor\s*=/.test(glsl)) errors.push("main 未写入 fragColor");
 
 // 4. 自定义函数定义 vs 调用
 const defined = new Set();
-const defRe = /^\s*(?:float|vec2|vec3|vec4|mat2|void|int)\s+([A-Za-z_]\w*)\s*\(/gm;
+const defRe =
+  /^\s*(?:float|vec2|vec3|vec4|mat2|void|int)\s+([A-Za-z_]\w*)\s*\(/gm;
 let dm;
 while ((dm = defRe.exec(code))) defined.add(dm[1]);
 
@@ -79,10 +80,41 @@ let mm;
 while ((mm = macroRe.exec(glsl))) defined.add(mm[1]);
 
 const builtins = new Set([
-  "main", "sin", "cos", "tan", "abs", "floor", "fract", "mix", "smoothstep",
-  "clamp", "length", "dot", "normalize", "exp", "pow", "sqrt", "max", "min",
-  "radians", "mat2", "vec2", "vec3", "vec4", "step", "atan", "mod", "sign",
-  "cross", "reflect", "texture", "distance", "for", "if", "while", "return",
+  "main",
+  "sin",
+  "cos",
+  "tan",
+  "abs",
+  "floor",
+  "fract",
+  "mix",
+  "smoothstep",
+  "clamp",
+  "length",
+  "dot",
+  "normalize",
+  "exp",
+  "pow",
+  "sqrt",
+  "max",
+  "min",
+  "radians",
+  "mat2",
+  "vec2",
+  "vec3",
+  "vec4",
+  "step",
+  "atan",
+  "mod",
+  "sign",
+  "cross",
+  "reflect",
+  "texture",
+  "distance",
+  "for",
+  "if",
+  "while",
+  "return",
 ]);
 const callRe = /([A-Za-z_]\w*)\s*\(/g;
 let cm;

@@ -40,7 +40,10 @@ export default function AboutPage() {
           </h2>
           <p className="mt-4 text-base leading-relaxed text-[var(--foreground-soft)]">
             按职业阶段倒序排列。每段列出实际负责的系统与产出，
-            <span className="font-mono text-[var(--accent)]">§ active</span> 标记当前在职。
+            <span className="font-mono text-[var(--accent)]">
+              § active
+            </span>{" "}
+            标记当前在职。
           </p>
         </header>
         <CareerTimeline />
@@ -54,7 +57,8 @@ export default function AboutPage() {
             技能 Pass
           </h2>
           <p className="mt-4 text-base leading-relaxed text-[var(--foreground-soft)]">
-            按 framegraph pass 的方式排列当前熟悉的渲染方向。LUT 渐变条长度即熟练度，颜色越偏琥珀代表越接近顶配。
+            按 framegraph pass 的方式排列当前熟悉的渲染方向。LUT
+            渐变条长度即熟练度，颜色越偏琥珀代表越接近顶配。
           </p>
         </header>
         <SkillPipeline />
@@ -68,7 +72,8 @@ export default function AboutPage() {
             渲染能力雷达
           </h2>
           <p className="mt-4 text-base leading-relaxed text-[var(--foreground-soft)]">
-            六维自评：PBR / Shader / 管线 / 优化 / 数学 / 工具链。点击顶点或轴标签切换维度详情。
+            六维自评：PBR / Shader / 管线 / 优化 / 数学 /
+            工具链。点击顶点或轴标签切换维度详情。
           </p>
         </header>
         <RenderRadar />
@@ -82,7 +87,9 @@ export default function AboutPage() {
             项目时间线
           </h2>
           <p className="mt-4 text-base leading-relaxed text-[var(--foreground-soft)]">
-            最近的渲染实验与文章。已成文的整卡可跳转，<span className="font-mono text-[var(--accent-warm)]">§ wip</span> 表示还在整理中。
+            最近的渲染实验与文章。已成文的整卡可跳转，
+            <span className="font-mono text-[var(--accent-warm)]">§ wip</span>{" "}
+            表示还在整理中。
           </p>
         </header>
         <AboutTimeline />

@@ -27,7 +27,10 @@ export const COOKIE_NAME = "yuyepage_admin";
 export const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 天
 
 /** 统一 JSON 响应，带 CORS（前台同源调用，但留宽松头方便调试） */
-export function json(data: unknown, statusOrInit: number | ResponseInit = 200): Response {
+export function json(
+  data: unknown,
+  statusOrInit: number | ResponseInit = 200,
+): Response {
   const init: ResponseInit =
     typeof statusOrInit === "number" ? { status: statusOrInit } : statusOrInit;
   return new Response(JSON.stringify(data), {
@@ -63,7 +66,11 @@ async function hmac(secret: string, msg: string): Promise<string> {
     false,
     ["sign"],
   );
-  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(msg));
+  const sig = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(msg),
+  );
   return btoa(String.fromCharCode(...new Uint8Array(sig)))
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
@@ -104,7 +111,10 @@ export async function verifyAdminCookie(
  * 校验是否管理员 —— 读 HttpOnly cookie，验签。
  * 返回是否已登录（不区分用户名，多账号均可）。
  */
-export async function isAdmin(env: CloudflareEnv, request: Request): Promise<boolean> {
+export async function isAdmin(
+  env: CloudflareEnv,
+  request: Request,
+): Promise<boolean> {
   if (!env.ADMIN_TOKEN) return false;
   const user = await verifyAdminCookie(request, env.ADMIN_TOKEN);
   return user !== null;
@@ -119,4 +129,3 @@ export async function signAdminCookie(
   const sig = await hmac(adminToken, `${username}.${exp}`);
   return { value: `${b64url(username)}.${exp}.${sig}`, exp };
 }
-

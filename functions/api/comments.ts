@@ -39,9 +39,7 @@ function sanitize(s: string): string {
   return s.replace(/[<>]/g, (c) => (c === "<" ? "&lt;" : "&gt;"));
 }
 
-export const onRequestGet: PagesFunction<EnvContext["env"]> = async (
-  ctx,
-) => {
+export const onRequestGet: PagesFunction<EnvContext["env"]> = async (ctx) => {
   if (ctx.request.method === "OPTIONS") return corsPreflight();
 
   const url = new URL(ctx.request.url);
@@ -59,9 +57,7 @@ export const onRequestGet: PagesFunction<EnvContext["env"]> = async (
   return json({ comments: result.results ?? [] });
 };
 
-export const onRequestPost: PagesFunction<EnvContext["env"]> = async (
-  ctx,
-) => {
+export const onRequestPost: PagesFunction<EnvContext["env"]> = async (ctx) => {
   if (ctx.request.method === "OPTIONS") return corsPreflight();
 
   const db = ctx.env.yuyepage_db;
@@ -108,7 +104,9 @@ export const onRequestPost: PagesFunction<EnvContext["env"]> = async (
   // 更新限流计数
   if (rate) {
     await db
-      .prepare("UPDATE comment_rate SET count = count + 1 WHERE ip = ? AND day = ?")
+      .prepare(
+        "UPDATE comment_rate SET count = count + 1 WHERE ip = ? AND day = ?",
+      )
       .bind(ip, today())
       .run();
   } else {

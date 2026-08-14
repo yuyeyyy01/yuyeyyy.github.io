@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import ArticleCard, { type ArticleCardProps } from "@/components/ArticleCard";
-import FeaturedLab from "@/components/home/FeaturedLab";
 import Glossary from "@/components/home/Glossary";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
@@ -33,7 +32,7 @@ const RECENT_ARTICLES: ArticleCardProps[] = [
   },
   {
     slug: "kajiya-kay-marschner-hair",
-    title: "Kajiya-Kay & \"类 Marschner\" 头发高光",
+    title: 'Kajiya-Kay & "类 Marschner" 头发高光',
     date: "2025-11-05",
     category: "Hair",
     excerpt:
@@ -63,7 +62,7 @@ interface HomeClientProps {
  * page.tsx 改为 server component 取 fs 数据，本组件承接原 page.tsx 的 motion 用法。
  * 视觉与原 page.tsx 完全一致，只是把 motion 调用集中到 client 边界。
  *
- * 顺序：§ Latest → § Featured Lab → § Glossary → children(§ Stats + § Tags) → § About
+ * 顺序：§ Latest → § Glossary → children(§ Stats + § Tags) → § About
  */
 export default function HomeClient({ children }: HomeClientProps) {
   return (
@@ -81,7 +80,8 @@ export default function HomeClient({ children }: HomeClientProps) {
             最近更新
           </h2>
           <p className="mt-4 text-base leading-relaxed text-[var(--foreground-soft)]">
-            一些关于渲染技术、Shader 实现细节和踩坑记录。如果你也在做实时渲染，应该会有点参考价值。
+            一些关于渲染技术、Shader
+            实现细节和踩坑记录。如果你也在做实时渲染，应该会有点参考价值。
           </p>
         </motion.header>
 
@@ -96,9 +96,6 @@ export default function HomeClient({ children }: HomeClientProps) {
           ))}
         </motion.div>
       </section>
-
-      {/* Featured Lab：首页可交互 shader demo（独立 client 组件，自带 § header） */}
-      <FeaturedLab />
 
       {/* 渲染术语速查 */}
       <section className="container-page py-20 md:py-28">
@@ -139,7 +136,9 @@ export default function HomeClient({ children }: HomeClientProps) {
 
         <div className="card mt-8 p-6 md:p-8">
           <p className="text-base leading-relaxed text-[var(--foreground-soft)]">
-            Unity 图形 / Shader 爱好者，偏技术美术 / 渲染工程方向。喜欢把&ldquo;看起来很玄学&rdquo;的效果拆成数学和代码，再一点点还原出来。这个站会集中记录：图形学基础复习提纲、渲染管线学习笔记、Unity URP 实战 Shader、以及一些面向面试的问答整理。
+            Unity 图形 / Shader 爱好者，偏技术美术 /
+            渲染工程方向。喜欢把&ldquo;看起来很玄学&rdquo;的效果拆成数学和代码，再一点点还原出来。这个站会集中记录：图形学基础复习提纲、渲染管线学习笔记、Unity
+            URP 实战 Shader、以及一些面向面试的问答整理。
           </p>
           <Link
             href="/about/"

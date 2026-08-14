@@ -31,13 +31,15 @@ export default function Header() {
           className="flex items-baseline gap-2 font-mono text-sm font-medium no-underline transition-colors duration-300"
         >
           <span className="text-[var(--foreground)]">Yuyeyyy</span>
-          <span aria-hidden className="text-[var(--foreground-muted)]">/</span>
+          <span aria-hidden className="text-[var(--foreground-muted)]">
+            /
+          </span>
           <span className="text-[var(--foreground-muted)]">render-notes</span>
         </Link>
 
         <nav className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <NavLink href="/blog/">博客</NavLink>
-          <NavLink href="/lab/">实验室</NavLink>
+          <NavLink href="/lab/">作品</NavLink>
           <NavLink href="/archive/">归档</NavLink>
           <NavLink href="/about/">关于</NavLink>
           <HeaderSearch />

@@ -24,7 +24,7 @@ export interface RenderSceneHTMLOpts {
   /** 是否自动旋转，默认 false */
   autoRotate?: boolean;
   /** 几何类型，默认 'octahedron' */
-  mesh?: 'octahedron' | 'icosahedron';
+  mesh?: "octahedron" | "icosahedron";
 }
 
 /**
@@ -34,7 +34,7 @@ export interface RenderSceneHTMLOpts {
 export function renderSceneHTML(opts: RenderSceneHTMLOpts): string {
   const height = opts.height ?? 320;
   const autoRotate = opts.autoRotate ?? false;
-  const mesh = opts.mesh ?? 'octahedron';
+  const mesh = opts.mesh ?? "octahedron";
   const canvasId = opts.canvasId;
 
   // 下方所有 JS 都嵌入返回字符串的 IIFE 里运行，这里只做字符串拼接

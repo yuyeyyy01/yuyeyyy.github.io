@@ -56,10 +56,18 @@ export function renderShaderHTML(opts: RenderShaderHTMLOpts): string {
   const script =
     "(function(){" +
     // --- 闭包变量（从外层注入 demoId / canvasId / uniforms 默认值）---
-    "var CANVAS_ID=" + JSON.stringify(canvasId) + ";" +
-    "var DEMO_ID=" + JSON.stringify(demoId) + ";" +
-    "var UNIFORM_DEFS=" + uniformsLiteral + ";" +
-    "var LABEL=" + JSON.stringify(demo.label) + ";" +
+    "var CANVAS_ID=" +
+    JSON.stringify(canvasId) +
+    ";" +
+    "var DEMO_ID=" +
+    JSON.stringify(demoId) +
+    ";" +
+    "var UNIFORM_DEFS=" +
+    uniformsLiteral +
+    ";" +
+    "var LABEL=" +
+    JSON.stringify(demo.label) +
+    ";" +
     // --- 拿 canvas / 上下文 ---
     "var canvas=document.getElementById(CANVAS_ID);" +
     "if(!canvas){return;}" +
@@ -225,7 +233,7 @@ export function renderShaderHTML(opts: RenderShaderHTMLOpts): string {
   return (
     '<div class="webgl-demo" style="position:relative;width:100%;height:' +
     h +
-    "px;border-radius:var(--radius-xl,1rem);border:1px solid var(--border);background:var(--background-soft);overflow:hidden;\">" +
+    'px;border-radius:var(--radius-xl,1rem);border:1px solid var(--border);background:var(--background-soft);overflow:hidden;">' +
     '<canvas id="' +
     canvasId +
     '" style="width:100%;height:100%;display:block;"></canvas>' +

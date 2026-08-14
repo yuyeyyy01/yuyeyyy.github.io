@@ -11,7 +11,12 @@ export function identity(): Mat4 {
   return m;
 }
 
-export function perspective(fovy: number, aspect: number, near: number, far: number): Mat4 {
+export function perspective(
+  fovy: number,
+  aspect: number,
+  near: number,
+  far: number,
+): Mat4 {
   const f = 1 / Math.tan(fovy / 2);
   const nf = 1 / (near - far);
   const m = new Float32Array(16);
@@ -23,25 +28,42 @@ export function perspective(fovy: number, aspect: number, near: number, far: num
   return m;
 }
 
-export function lookAt(eye: [number, number, number], center: [number, number, number], up: [number, number, number]): Mat4 {
+export function lookAt(
+  eye: [number, number, number],
+  center: [number, number, number],
+  up: [number, number, number],
+): Mat4 {
   const [ex, ey, ez] = eye;
   let zx = ex - center[0];
   let zy = ey - center[1];
   let zz = ez - center[2];
   let zl = Math.hypot(zx, zy, zz) || 1;
-  zx /= zl; zy /= zl; zz /= zl;
+  zx /= zl;
+  zy /= zl;
+  zz /= zl;
   let xx = up[1] * zz - up[2] * zy;
   let xy = up[2] * zx - up[0] * zz;
   let xz = up[0] * zy - up[1] * zx;
   let xl = Math.hypot(xx, xy, xz) || 1;
-  xx /= xl; xy /= xl; xz /= xl;
+  xx /= xl;
+  xy /= xl;
+  xz /= xl;
   const yx = zy * xz - zz * xy;
   const yy = zz * xx - zx * xz;
   const yz = zx * xy - zy * xx;
   const m = new Float32Array(16);
-  m[0] = xx; m[1] = yx; m[2] = zx; m[3] = 0;
-  m[4] = xy; m[5] = yy; m[6] = zy; m[7] = 0;
-  m[8] = xz; m[9] = yz; m[10] = zz; m[11] = 0;
+  m[0] = xx;
+  m[1] = yx;
+  m[2] = zx;
+  m[3] = 0;
+  m[4] = xy;
+  m[5] = yy;
+  m[6] = zy;
+  m[7] = 0;
+  m[8] = xz;
+  m[9] = yz;
+  m[10] = zz;
+  m[11] = 0;
   m[12] = -(xx * ex + xy * ey + xz * ez);
   m[13] = -(yx * ex + yy * ey + yz * ez);
   m[14] = -(zx * ex + zy * ey + zz * ez);
@@ -54,7 +76,12 @@ export function rotateY(angle: number): Mat4 {
   const c = Math.cos(angle);
   const s = Math.sin(angle);
   const m = new Float32Array(16);
-  m[0] = c; m[2] = -s; m[5] = 1; m[8] = s; m[10] = c; m[15] = 1;
+  m[0] = c;
+  m[2] = -s;
+  m[5] = 1;
+  m[8] = s;
+  m[10] = c;
+  m[15] = 1;
   return m;
 }
 
@@ -63,7 +90,12 @@ export function rotateX(angle: number): Mat4 {
   const c = Math.cos(angle);
   const s = Math.sin(angle);
   const m = new Float32Array(16);
-  m[0] = 1; m[5] = c; m[6] = s; m[9] = -s; m[10] = c; m[15] = 1;
+  m[0] = 1;
+  m[5] = c;
+  m[6] = s;
+  m[9] = -s;
+  m[10] = c;
+  m[15] = 1;
   return m;
 }
 

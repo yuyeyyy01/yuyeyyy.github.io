@@ -29,7 +29,9 @@ interface PostUpdate {
   published?: number;
 }
 
-async function getSlug(ctx: EventContext<Request, string, EnvContext["env"]>): Promise<string | null> {
+async function getSlug(
+  ctx: EventContext<Request, string, EnvContext["env"]>,
+): Promise<string | null> {
   // Pages Functions 动态路由：params.slug
   const slug = (ctx.params as Record<string, string | undefined>)?.slug;
   return slug ?? null;
@@ -37,7 +39,8 @@ async function getSlug(ctx: EventContext<Request, string, EnvContext["env"]>): P
 
 export const onRequestGet: PagesFunction<EnvContext["env"]> = async (ctx) => {
   if (ctx.request.method === "OPTIONS") return corsPreflight();
-  if (!(await isAdmin(ctx.env, ctx.request))) return json({ error: "未授权" }, 401);
+  if (!(await isAdmin(ctx.env, ctx.request)))
+    return json({ error: "未授权" }, 401);
 
   const slug = await getSlug(ctx);
   if (!slug) return json({ error: "缺少 slug" }, 400);
@@ -54,7 +57,8 @@ export const onRequestGet: PagesFunction<EnvContext["env"]> = async (ctx) => {
 
 export const onRequestPut: PagesFunction<EnvContext["env"]> = async (ctx) => {
   if (ctx.request.method === "OPTIONS") return corsPreflight();
-  if (!(await isAdmin(ctx.env, ctx.request))) return json({ error: "未授权" }, 401);
+  if (!(await isAdmin(ctx.env, ctx.request)))
+    return json({ error: "未授权" }, 401);
 
   const slug = await getSlug(ctx);
   if (!slug) return json({ error: "缺少 slug" }, 400);
@@ -76,10 +80,16 @@ export const onRequestPut: PagesFunction<EnvContext["env"]> = async (ctx) => {
   // 动态拼 update，只更新传入的字段
   const fields: string[] = [];
   const values: (string | number)[] = [];
-  const push = (col: string, v: string | number | string[] | undefined, asStr = false) => {
+  const push = (
+    col: string,
+    v: string | number | string[] | undefined,
+    asStr = false,
+  ) => {
     if (v === undefined) return;
     fields.push(`${col} = ?`);
-    values.push(asStr && Array.isArray(v) ? JSON.stringify(v) : (v as string | number));
+    values.push(
+      asStr && Array.isArray(v) ? JSON.stringify(v) : (v as string | number),
+    );
   };
   push("title", data.title);
   push("date", data.date);
@@ -104,9 +114,12 @@ export const onRequestPut: PagesFunction<EnvContext["env"]> = async (ctx) => {
   return json({ ok: true });
 };
 
-export const onRequestDelete: PagesFunction<EnvContext["env"]> = async (ctx) => {
+export const onRequestDelete: PagesFunction<EnvContext["env"]> = async (
+  ctx,
+) => {
   if (ctx.request.method === "OPTIONS") return corsPreflight();
-  if (!(await isAdmin(ctx.env, ctx.request))) return json({ error: "未授权" }, 401);
+  if (!(await isAdmin(ctx.env, ctx.request)))
+    return json({ error: "未授权" }, 401);
 
   const slug = await getSlug(ctx);
   if (!slug) return json({ error: "缺少 slug" }, 400);

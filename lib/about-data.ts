@@ -222,9 +222,9 @@ export const TIMELINE_ITEMS: TimelineItem[] = [
 
 /** 联系方式：email 为占位，建议替换为真实邮箱 */
 export const CONTACT: ContactInfo = {
-  email: "yuyeyyy@yuyepage.pages.dev",
+  email: "yuyeyyy@yuyepage-3yi.pages.dev",
   github: "https://github.com/yuyeyyy1",
-  site: "https://yuyepage.pages.dev",
+  site: "https://yuyepage-3yi.pages.dev",
 };
 
 /**
@@ -240,13 +240,11 @@ export const CAREER_ITEMS: CareerItem[] = [
     role: "技术美术（TA）",
     location: "腾讯魔方工作室",
     summary:
-      "负责角色/道具/场景材质、着色器与美术工具链，在美术表现与运行时预算之间找平衡点。",
+      "负责预研项目部分角色 / 道具 / 场景的材质与着色器开发及美术工具链建设，在美术表现与运行时性能预算之间寻找最优平衡。",
     highlights: [
-      "复杂材质编写搭建清漆材质系统，透明物体高亮描边,角色面部材质优化，：。",
-      "。",
-      "实现 ADS 瞄具。",
-      "构建 HUD 与武器 UI 材质系统：纹理图集 UV 变换驱动多位数弹药显示，替代逐位 Widget 的高开销做法。",
-      "产出美术自检工具：灰度检测工具（已打包 exe）、虹膜生成器（MF_IrisGenerator + SphereMask），引擎内部nanite自检插件，把重复的目视校验变成可复现流程。",
+      "复杂材质系统搭建：搭建半透雨衣材质/清漆材质系统，实现透明物体高亮描边方案，针对性优化角色面部皮肤与眼睛材质，并改进植被材质风动模拟 。",
+      "HUD 与武器 UI 材质系统：武器 UI包含多位数显/icon启用/进度条等动效，按常规 UI 实现会产生大量材质实例，维护成本高；提出基于纹理图集 UV 变换驱动的纯材质方案，直接驱动多种ui显示；显著降低 UI 材质实例数量与维护成本",
+      "美术工具链：资产验收依赖人工目视校验，标准不一且重复劳动量大；独立开发灰度检测工具（已打包exe）、虹膜生成器（MF_IrisGenerator + SphereMask）与引擎内 Nanite 自检插件；将重复性目视校验转化为标准化、可复现的自动化流程，提升团队验收效率与资产质量一致性。",
     ],
     stack: ["UE5", "HLSL", "Material Editor", "RenderDoc", "SVN"],
     current: true,
@@ -259,14 +257,21 @@ export const CAREER_ITEMS: CareerItem[] = [
     summary:
       "以「拆掉黑盒」为目标做系统性渲染练习，产出可复现的 Shader 实现与配套笔记。",
     highlights: [
-        "仿照《极乐迪斯科》室内光照系统———实现2D 面片仿 3D 渲染方案：AI 辅助预渲染与全屏坐标重建",
-        "仿照《幻塔》风格化后处理描边方案——实现风格化抗时序抖动描边",
-        "仿照《恋与深空》用双 Kajiya-Kay 高光近似 Marschner 的头发着色，研究头发材质渲染表现。",
+      "仿照《极乐迪斯科》室内光照系统———实现2D 面片仿 3D 渲染方案：AI 辅助预渲染与全屏坐标重建",
+      "仿照《幻塔》风格化后处理描边方案——实现风格化抗时序抖动描边",
+      "仿照《恋与深空》用双 Kajiya-Kay 高光近似 Marschner 的头发着色，研究头发材质渲染表现。",
       "完成厚度图驱动 + 预积分 LUT 的皮肤 SSS 流水线，覆盖 kernel 生成到屏幕空间模糊全链路。",
       "基于 ScriptableRendererFeature 做多相机 Portal、体积光与动态天空盒，二次元卡渲后处理描边同步整理成站内文章。",
-        
     ],
-    stack: ["Unity URP", "HLSL", "Shader", "C#", "Frame Debugger","RenderDoc", "Git"],
+    stack: [
+      "Unity URP",
+      "HLSL",
+      "Shader",
+      "C#",
+      "Frame Debugger",
+      "RenderDoc",
+      "Git",
+    ],
   },
   {
     period: "待补充",
@@ -275,9 +280,7 @@ export const CAREER_ITEMS: CareerItem[] = [
     location: "待补充",
     summary:
       "在此补充更早的经历。若无更早经历，直接删除 lib/about-data.ts 中的这一条即可。",
-    highlights: [
-      "把这些条目替换为具体做了什么、用了什么方法、带来什么结果。",
-    ],
+    highlights: ["把这些条目替换为具体做了什么、用了什么方法、带来什么结果。"],
     stack: ["待补充"],
   },
 ];

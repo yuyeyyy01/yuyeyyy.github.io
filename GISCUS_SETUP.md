@@ -26,8 +26,7 @@
    - 如果没有可选分类，先去仓库 Discussions 建一个分类
 5. 页面下方会生成一段 `<script>` 代码，找到这两行：
    ```html
-   data-repo-id="R_xxxxxxx"
-   data-category-id="DIC_xxxxxxx"
+   data-repo-id="R_xxxxxxx" data-category-id="DIC_xxxxxxx"
    ```
 6. 把这两个 ID 发回来（或自己改 `components/Comments.tsx` 里的 `repoId` 和 `categoryId`）
 

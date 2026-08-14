@@ -83,7 +83,9 @@ export default function Editor() {
 
   const [mode, setMode] = useState<Mode>("rich");
   const [fullscreen, setFullscreen] = useState(false);
-  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(
+    null,
+  );
   // 切换模式时递增，强制编辑器重建注入当前 contentMd（rich↔source 双向同步）
   const [modeSwitchKey, setModeSwitchKey] = useState(0);
 
@@ -121,7 +123,9 @@ export default function Editor() {
       }
       const d = (await res.json()) as { post?: PostFull };
       if (d.post) {
-        const t = Array.isArray(d.post.tags) ? d.post.tags : JSON.parse(d.post.tags || "[]");
+        const t = Array.isArray(d.post.tags)
+          ? d.post.tags
+          : JSON.parse(d.post.tags || "[]");
         setSlug(d.post.slug);
         setTitle(d.post.title);
         setDate(d.post.date);
@@ -178,7 +182,17 @@ export default function Editor() {
       published,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, title, date, category, description, tags, contentMd, published, loading]);
+  }, [
+    slug,
+    title,
+    date,
+    category,
+    description,
+    tags,
+    contentMd,
+    published,
+    loading,
+  ]);
 
   const save = useCallback(async () => {
     if (!slug.trim()) {
@@ -193,7 +207,10 @@ export default function Editor() {
         date,
         category,
         description,
-        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+        tags: tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
         content_md: contentMd,
         published: published ? 1 : 0,
       };
@@ -203,7 +220,11 @@ export default function Editor() {
         credentials: "include",
         body: JSON.stringify(isNew ? { ...body, slug } : body),
       });
-      const d = (await res.json()) as { ok?: boolean; rebuild?: boolean; error?: string };
+      const d = (await res.json()) as {
+        ok?: boolean;
+        rebuild?: boolean;
+        error?: string;
+      };
       if (res.ok && d.ok) {
         setMsg({
           kind: "ok",
@@ -224,7 +245,18 @@ export default function Editor() {
     } finally {
       setSaving(false);
     }
-  }, [slug, title, date, category, description, tags, contentMd, published, isNew, router]);
+  }, [
+    slug,
+    title,
+    date,
+    category,
+    description,
+    tags,
+    contentMd,
+    published,
+    isNew,
+    router,
+  ]);
 
   // 快捷键
   useEffect(() => {
@@ -343,7 +375,9 @@ export default function Editor() {
       <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="flex flex-col">
           <div className="mb-1 text-xs text-[var(--foreground-muted)]">
-            {mode === "rich" ? "富文本编辑（斜杠命令插入块）" : "MDX 源码（可写 <Scene> <Video> 等组件）"}
+            {mode === "rich"
+              ? "富文本编辑（斜杠命令插入块）"
+              : "MDX 源码（可写 <Scene> <Video> 等组件）"}
           </div>
           <div className="min-h-[500px] flex-1 overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)]">
             {mode === "rich" ? (
@@ -362,7 +396,9 @@ export default function Editor() {
           </div>
         </div>
         <div className="flex flex-col">
-          <div className="mb-1 text-xs text-[var(--foreground-muted)]">预览</div>
+          <div className="mb-1 text-xs text-[var(--foreground-muted)]">
+            预览
+          </div>
           <div className="min-h-[500px] flex-1 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
             <Preview source={contentMd} />
           </div>
@@ -383,10 +419,18 @@ export default function Editor() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs text-[var(--foreground-muted)]">{label}</span>
+      <span className="mb-1 block text-xs text-[var(--foreground-muted)]">
+        {label}
+      </span>
       {children}
     </label>
   );

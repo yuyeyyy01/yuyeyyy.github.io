@@ -1,0 +1,336 @@
+---
+title: "URP 后处理卡通风格化渲染"
+date: "2026-04-20"
+category: "URP / 后处理 / 风格化"
+description: "基于 URP 屏幕空间后处理的卡通风格化渲染：色阶化、深度+法线混合描边、排线/网点程序化纹理填充，以及解决描边闪烁的 4-pass 时序稳定方案（Temporal History）。"
+tags: ["URP", "RenderFeature", "后处理", "卡通渲染", "描边", "TAA"]
+---
+
+> 又完善了一下之前做的后处理材质，效果很勾石但还是写一下总结存档一下。
+> 本文只是我对后处理实现风格化的一次小尝试，如有错误或建议，还望大佬们指出。
+
+<Video
+  bilibili="BV17FNVzbEsb"
+  caption="风格化场景渲染 demo —— 最终效果（第五版）"
+/>
+
+<Figure
+  src="/assets/blog/urp-postprocess-toon/scene.jpg"
+  alt="哥特式教堂内部场景，彩色玻璃窗透入体积光，画面呈卡通风格化效果"
+  caption="风格化场景渲染 demo 效果对比"
+/>
+
+## 一、概述
+
+这是一个基于 URP 的屏幕空间后处理特效。它通过自定义 RendererFeature 将全屏 Shader 注入渲染管线，旨在将标准的 3D 渲染画面实时转化为具有手绘感的卡通风格。核心由四块组成：
+
+- **色阶化（Posterization）**：消除平滑渐变，Shader 对颜色进行离散化处理。
+- **混合描边（Hybrid Outline）**：结合深度（Depth）和法线（Normal）的边缘检测。
+- **程序化纹理填充**：基于亮度区域自动填充排线（Hatching）、交叉排线（Cross-Hatch）或网点（Halftone Dots）。
+- **手绘噪点**：加个噪点图。
+
+## 二、色阶化（Posterization）
+
+先计算亮度，将亮度分层，然后将原始色调重新映射到分层后的亮度上。
+
+公式：
+
+$$
+Posterized = \frac{round(Luminance \times Levels)}{Levels}
+$$
+
+```hlsl
+float Posterize(float value, float levels)
+{
+    return round(value * levels) / levels;
+}
+
+// 色阶化颜色
+float3 PosterizeColor(float3 color, float levels)
+{
+    float luminance = dot(color, float3(0.299, 0.587, 0.114));
+    float posterizedLum = Posterize(luminance, levels);
+
+    // 保持原始色调，应用色阶化亮度
+    float3 hue = color / max(luminance, 0.001);
+    return hue * posterizedLum;
+}
+```
+
+关键点是 `hue = color / max(luminance, 0.001)`：先归一化色调（避免除零），再把离散化后的亮度乘回去，这样只量化亮度、不破坏原始色相。
+
+## 三、混合描边（Hybrid Outline）
+
+同时采样中心像素周围（十字方向 + 对角线方向）的深度和法线：
+
+- **深度边缘**：`abs(centerDepth - sampleDepth) > threshold`。
+- **法线边缘**：`dot(centerNormal, sampleNormal)` 的差值检测角度变化。
+
+参考：
+
+- 《数字图像处理：边缘检测（Edge detection）》
+- 《UE4 卡通渲染基础教程 Part2：Toon Outline》
+- 《就边缘检测法描边分析 Unity RenderFeature 原理》
+
+```hlsl
+float GetOutline(float2 uv)
+{
+    float2 texelSize = 1.0 / _ScreenParams.xy;
+
+    // 采样噪声来控制轮廓粗细变化
+    float outlineNoise = GetNoise(uv) * _OutlineNoiseStrength;
+    float thicknessMultiplier = 1.0 + outlineNoise;
+
+    // 简化的采样 - 只采样4个主要方向
+    float depthCenter = SampleSceneDepth(uv);
+    float3 normalCenter = SampleSceneNormals(uv);
+
+    // 定义4个方向的偏移
+    float2 offsets[4];
+    offsets[0] = float2(texelSize.x, 0) * _OutlineThickness * thicknessMultiplier;
+    offsets[1] = float2(-texelSize.x, 0) * _OutlineThickness * thicknessMultiplier;
+    offsets[2] = float2(0, texelSize.y) * _OutlineThickness * thicknessMultiplier;
+    offsets[3] = float2(0, -texelSize.y) * _OutlineThickness * thicknessMultiplier;
+
+    float outline = 0.0;
+
+    // 使用固定次数的循环
+    [unroll]
+    for (int i = 0; i < 4; i++)
+    {
+        // 深度边缘检测
+        float depthSample = SampleSceneDepth(uv + offsets[i]);
+        float depthDiff = abs(depthCenter - depthSample);
+        float depthEdge = step(_OutlineThreshold, depthDiff);
+
+        // 法线边缘检测
+        float3 normalSample = SampleSceneNormals(uv + offsets[i]);
+        float normalDiff = 1.0 - dot(normalCenter, normalSample);
+        float normalEdge = step(0.1, normalDiff);
+
+        outline = max(outline, max(depthEdge, normalEdge));
+    }
+
+    // 添加对角线采样
+    float2 diagOffsets[4];
+    diagOffsets[0] = float2(texelSize.x, texelSize.y) * _OutlineThickness * thicknessMultiplier;
+    diagOffsets[1] = float2(-texelSize.x, texelSize.y) * _OutlineThickness * thicknessMultiplier;
+    diagOffsets[2] = float2(texelSize.x, -texelSize.y) * _OutlineThickness * thicknessMultiplier;
+    diagOffsets[3] = float2(-texelSize.x, -texelSize.y) * _OutlineThickness * thicknessMultiplier;
+
+    [unroll]
+    for (int j = 0; j < 4; j++)
+    {
+        float depthSample = SampleSceneDepth(uv + diagOffsets[j]);
+        float depthDiff = abs(depthCenter - depthSample);
+        float depthEdge = step(_OutlineThreshold, depthDiff);
+
+        float3 normalSample = SampleSceneNormals(uv + diagOffsets[j]);
+        float normalDiff = 1.0 - dot(normalCenter, normalSample);
+        float normalEdge = step(0.1, normalDiff);
+        outline = max(outline, max(depthEdge, normalEdge));
+    }
+
+    return outline;
+}
+```
+
+## 四、程序化纹理填充
+
+### 单向排线（Hatch）
+
+基于角度 `_HatchAngle` 构建方向向量，计算投影距离并取小数部分 `frac` 生成条纹：
+
+```hlsl
+// 斜排线效果
+float HatchPattern(float2 uv, float density, float angle)
+{
+    float rad = angle * 3.14159 / 180.0;
+    float2 dir = float2(cos(rad), sin(rad));
+
+    // 投影距离
+    float proj = dot(uv, dir) * density;
+    float pattern = frac(proj);
+
+    // 添加噪声扰动
+    float noise = GetNoise(uv) * _NoiseStrength;
+    pattern += noise;
+
+    return step(pattern, 0.5);
+}
+```
+
+### 交叉排线（Cross Hatch）
+
+叠加两层不同角度（相差 60 度）且密度不同的 HatchPattern：
+
+```hlsl
+float CrossHatchPattern(float2 uv, float density, float angle)
+{
+    float hatch1 = HatchPattern(uv, density, angle);
+    float hatch2 = HatchPattern(uv, density * 1.2, angle + 60.0);
+    return min(hatch1 + hatch2, 1.0);
+}
+```
+
+### 网点（Dots）
+
+将 UV 划分网格，计算像素到网格中心的距离 `distance(gridUV, 0.5)`，引入随机偏移增加自然感：
+
+```hlsl
+// 网点纸效果
+float DotPattern(float2 uv, float density)
+{
+    float2 pixelUV = uv * density;
+    float2 gridUV = frac(pixelUV);
+
+    // 添加随机偏移避免规律性
+    float random = frac(sin(dot(floor(pixelUV), float2(12.9898, 78.233))) * 43758.5453);
+    gridUV += random * 0.3;
+
+    float dist = distance(gridUV, float2(0.5, 0.5));
+    return step(dist, 0.35);
+}
+```
+
+## 五、遇到的问题与解决
+
+### 1. 描边闪烁
+
+第一版效果里出现的问题是**描边闪烁**和**纹理相对静止**。
+
+先解决描边闪烁。之前想过的描边方式有：
+
+- **双 pass 沿法线方向外偏**（学人物卡渲的时候用到）：要注意平滑法线，否则有断裂；还要保持描边宽度不变，需要顶点偏移的距离在 NDC 坐标下为固定值。但这是写在**物体材质**上的，不是后处理材质——后处理拿不到物体法线信息，不能基于物体法线外拓，暂时放下了这个想法（我之前基础不太扎实，检讨）。
+- **菲涅尔软描边**。
+- **绘制内描边**：2D 的可以加透明度通道。
+- 学校开了 MATLAB 做图像的边缘检测作业，想到可以用这个方法来实现。
+
+最终决定先不换方案，用**边缘检测**实现。这篇文章帮了大忙：**GDC2025: Generalized Stylized Post Processing Outline**。
+
+虽然还有远处细小的闪烁但起码看得下去了——还没有完全理解，做不到原知乎的效果，等学会了再 po 代码。
+
+### 2. 最终方案：4-pass 时序稳定
+
+（二编 12/18）描边改成了：**用深度差做边缘强度，用法线点乘视角做内部折痕/结构边**。抗闪烁用了 4 个 pass：
+
+**Pass 0 — ToonBase（色阶 + 排线/点阵）**：先 posterize（减少亮度层级），计算 luminance 分区，`_FinalBlend` 决定 toon 与原图混合：
+
+```hlsl
+float3 posterizedColor = PosterizeColor(color.rgb, _PosterizeLevels);
+float lum = dot(posterizedColor, float3(0.299, 0.587, 0.114));
+if (lum < _DarkShadowThreshold) {}
+else if (lum < _ShadowThreshold) {}
+else if (lum < _HighlightThreshold) {}
+final = lerp(color.rgb, final, _FinalBlend);
+```
+
+**Pass 1 — OutlineDepth（把边缘信息编码到一张 RT）**：4 方向 + 正反偏移，共 8 次 depth/normal 采样。输出编码为 `float4(edge, deviceDepth, minDepth3x3, edgeMark)`：
+
+- **R：edge（0~1）** → 作为描边强度输入给 Temporal；
+- **G：deviceDepth** → 与历史 depth 做去遮挡判断；
+- **B：minDepth3x3** → 更稳的"遮挡深度"，用于减少闪烁（比中心 depth 抖动小）；
+- **A：edgeMark** → 可做调试/二值边缘。
+
+```hlsl
+float GetContourEdge(float centerDepth01, float sampleDepth01) {}
+float GetStructureEdge(float3 centerNormal, float3 sampleNormal) {}
+```
+
+**Pass 2 — TemporalHistory（时序混合）**：当前像素（uv + minDepth）反算世界坐标，利用当前帧的逆视图投影矩阵，把这个 2D 像素反向推导回 3D 世界空间中真实的物理位置；用 PrevVP 投影得到 prevUV，从 `_HistoryTex(prevUV)` 采样历史（stable、depth、权重等）。
+
+判历史是否可信：
+
+- **outOfBounds**：prevUV 出屏；
+- **disocclusion**：`|currDepth01 - prevDepth01| > depthThreshold`；
+- **reprojectionError**：历史点再投影回当前，`|uvBack - uv| > reprojThreshold`。
+
+可信 → 融合；不可信 → 回退当前：
+
+```hlsl
+float dDiff = abs(Linear01Depth(currDepth) - Linear01Depth(prevDepth));
+float disocc = step(_DepthDisocclusionThreshold, dDiff);
+
+float2 uvBack = ProjectToUV(wsPrev, _CurrViewProj);
+float reprojErr = length(uvBack - uv);
+float reprojBad = step(_ReprojectionErrorThreshold, reprojErr);
+
+float invalid = max(outOfBounds ? 1 : 0, max(disocc, reprojBad));
+if (invalid > 0.5) return curr;
+```
+
+静止时更稳：权重 w 逐帧累加到 `_MaxHistoryWeight`；w 越大，`alphaStable` 越小（越稳、越不容易被小抖动破坏）：
+
+```hlsl
+float w = min(prevW + 1.0, _MaxHistoryWeight);
+float wNorm = saturate(w / _MaxHistoryWeight);
+float alphaStable = alpha * lerp(1.0, 0.35, wNorm);
+stable = lerp(prevStable, currOutline, alphaStable);
+```
+
+**Pass 3 — Composite（最终描边 + AA）**：
+
+```hlsl
+// smoothstep（控制 AA 宽度）
+float outline = smoothstep(0.5 - aa, 0.5 + aa, stable);
+// 混色
+outCol = base.rgb * lerp(1, _OutlineColor.rgb, _OutlineIntensity * outline);
+```
+
+整体链路：当前像素 (uv, depth) → 反算世界坐标 → 投影到上一帧 → 得到 prevUV；当前深度 vs 历史深度差过大 → 认为历史无效 → 回退当前帧（避免拖影/鬼影）；用历史点再投影回当前帧，看 uvBack 与 uv 的误差 → 太大判 invalid；用 `|prevUV - uv|` 近似 motion；让静止时越积越稳（w 增加），同时降低 `alphaStable` 防止轻微噪声抖动。
+
+### 3. 要注意渲染纹理坐标
+
+垂直纹理坐标约定在两种类型的平台之间有所不同：
+
+- **Direct3D 类**：顶部坐标为 0 并向下增加。此类型适用于 Direct3D、Metal 和游戏主机。
+- **OpenGL 类**：底部坐标为 0 并向上增加。此类适用于 OpenGL 和 OpenGL ES。
+
+```hlsl
+float2 uv = input.uv;
+if (_FlipY > 0.5) uv.y = 1.0 - uv.y;
+output.uv = uv;
+```
+
+参考：Unity Manual — Platform Specific Rendering Differences。
+
+### 4. 摄像机移动时，填充纹理相对静止
+
+摄像机移动时，那些填充的纹理相对静止了，给人一种眩晕感——因为我采样的是**屏幕空间的 UV** 纹理。后面我试着改成了采样 **worldpos**：
+
+摄像机把 3D 世界压到了 2D 屏幕上。根据屏幕上的一个点和它对应的深度，反推出它在 3D 世界里的原始位置再应用纹理：
+
+```hlsl
+float3 GetWorldPosition(float2 uv, float depth)
+{
+    // 构建裁剪空间坐标 (NDC)
+    float4 positionCS = float4(uv * 2.0 - 1.0, depth, 1.0);
+
+    // 使用逆矩阵转回世界空间
+    float4 positionWS = mul(unity_MatrixInvVP, positionCS);
+
+    // 透视除法
+    return positionWS.xyz / positionWS.w;
+}
+...
+float depth = SampleSceneDepth(input.uv);
+float3 worldPos = GetWorldPosition(input.uv, depth);
+```
+
+结果 worldpos 有拉伸。想着后期参考《【图形学】风格化美学：抖动的类型、原理及实现 —— 以〈奥伯拉丁的回归〉为例》再改，先忙别的了。
+
+## 附：TAA 的运作机制
+
+TAA 的运作机制拆解为以下四个核心步骤：
+
+1. **亚像素级抖动（Sub-pixel 抖动）**：TAA 的核心起手式。每一帧让摄像机的投影矩阵发生极其微小的偏移（通常只有半个像素或四分之一个像素的距离）。第一帧拍偏左一点，第二帧拍偏右一点，连续几帧下来就获得了同一物体在不同微观角度下的采样信息，相当于变相实现了超采样（SSAA），但没有增加单帧的渲染压力。
+2. **运动矢量与重投影**：因为画面在动（摄像机移动或物体自身移动），不能直接把上一帧的画面叠在当前帧上，否则会变成严重的重影。TAA 强依赖引擎生成的 Motion Vectors（运动矢量图），它记录了屏幕上每个像素"从上一帧到这一帧移动了多少距离"。TAA 利用这个矢量把历史帧的像素精确地"扯"回当前帧的位置（对齐坐标）。
+3. **历史混合**：对齐之后，TAA 会把"当前帧的颜色"和"对齐后的历史帧颜色"进行混合（通常历史帧权重极高，占 80%~90%），把那些因为抖动和分辨率不足产生的狗牙（锯齿）和高频闪烁（比如远处的铁丝网、细碎的高光）通过多帧融合强行"抹平"。
+4. **邻域颜色限制（邻域夹紧/裁剪）**：TAA 的防御机制（用来防残影 Ghosting）。由于重投影不可能 100% 准确（比如被遮挡的背景突然露出来），TAA 会检查当前像素周围 3x3 范围的颜色。
+
+## 后续改进
+
+（三编 4/18）
+
+- 将前向渲染改成**延迟渲染**，法线后处理阶段 `_CameraNormalsTexture` 采样改成了从 **G-Buffer 直接提取几何信息**，不依赖额外的 Depth-Normal Prepass，法线精度更高。
+- 色阶化逻辑要采样单独 RenderFeature，和描边分开。之前色阶化使用了一堆参数来进行细调十分不方便，改成**自定义 ramp 图**来进行调节，更加形象好调节些。

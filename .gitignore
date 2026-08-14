@@ -9,6 +9,7 @@ node_modules
 # 构建中断后腾挪出来的旧缓存目录（safe-delete 阻塞时用 mv 代替 rm 产生）
 /.next-locked-*/
 /.next-stale-*/
+/out-stale-*/
 
 # production
 /build

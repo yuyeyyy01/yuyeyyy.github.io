@@ -17,7 +17,12 @@ function insert(text: string, wrap: [string, string] | null = null) {
   window.dispatchEvent(ev);
 }
 
-const SOURCE_BUTTONS: { label: string; title: string; text?: string; wrap?: [string, string] }[] = [
+const SOURCE_BUTTONS: {
+  label: string;
+  title: string;
+  text?: string;
+  wrap?: [string, string];
+}[] = [
   { label: "H1", title: "一级标题", text: "# " },
   { label: "H2", title: "二级标题", text: "## " },
   { label: "H3", title: "三级标题", text: "### " },
@@ -28,7 +33,11 @@ const SOURCE_BUTTONS: { label: string; title: string; text?: string; wrap?: [str
   { label: "1. 列表", title: "有序列表", text: "1. " },
   { label: "</>", title: "行内代码", wrap: ["`", "`"] },
   { label: "```", title: "代码块", text: "```\n", wrap: ["", "\n```"] },
-  { label: "| 表格", title: "表格", text: "\n| A | B |\n|---|---|\n| 1 | 2 |\n" },
+  {
+    label: "| 表格",
+    title: "表格",
+    text: "\n| A | B |\n|---|---|\n| 1 | 2 |\n",
+  },
   { label: "— 分割线", title: "分割线", text: "\n\n---\n\n" },
   { label: "🔗 链接", title: "链接", text: "[描述](https://)" },
   { label: "🖼 图片", title: "图片", text: "![alt](https://)" },
@@ -98,7 +107,9 @@ export default function Toolbar({
         </div>
       ) : (
         <span className="text-xs text-[var(--foreground-muted)]">
-          富文本模式用 <kbd className="rounded bg-[var(--surface-2)] px-1">/</kbd> 斜杠命令插入块
+          富文本模式用{" "}
+          <kbd className="rounded bg-[var(--surface-2)] px-1">/</kbd>{" "}
+          斜杠命令插入块
         </span>
       )}
 

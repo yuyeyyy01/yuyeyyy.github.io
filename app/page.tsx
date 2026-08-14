@@ -2,7 +2,7 @@ import Hero from "@/components/Hero";
 import HomeClient from "@/components/home/HomeClient";
 import StatsPanel from "@/components/home/StatsPanel";
 import TagCloud, { type TagCloudPost } from "@/components/home/TagCloud";
-import { LAB_DEMOS } from "@/components/lab/demos";
+import { GALLERY_COUNT } from "@/lib/lab-gallery";
 import { getAllPosts, getAllTags } from "@/lib/posts";
 
 /**
@@ -12,7 +12,7 @@ import { getAllPosts, getAllTags } from "@/lib/posts";
  * 传给 HomeClient / TagCloud / StatsPanel。这样静态导出的 HTML 含真实数据，无 hydration
  * mismatch，也避免在 client bundle 里直接调用 node:fs。
  *
- * 顺序：§ Latest → § Featured Lab → § Glossary → § Stats → § Tags → § About。
+ * 顺序：§ Latest → § Glossary → § Stats → § Tags → § About。
  * § Stats + § Tags 作为 children 传入 HomeClient，由其在 § Glossary 与 § About 之间渲染。
  */
 export default function Home() {
@@ -30,7 +30,7 @@ export default function Home() {
 
   // § Stats 仪表盘数据：build 期算好，注入 StatsPanel（client）
   const postCount = posts.length;
-  const labCount = LAB_DEMOS.length;
+  const labCount = GALLERY_COUNT;
   // 中文按字粗略算，求所有文章 content 长度总和
   const totalChars = posts.reduce((sum, p) => sum + p.content.length, 0);
   // getAllPosts 已按 date 降序，首项即最新

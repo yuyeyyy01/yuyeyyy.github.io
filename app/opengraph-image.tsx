@@ -13,43 +13,41 @@ export const contentType = "image/png";
 
 export default async function OpengraphImage() {
   return new ImageResponse(
-    (
+    <div
+      style={{
+        height: "100%",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#000000",
+        color: "#ffffff",
+        fontFamily: "sans-serif",
+        letterSpacing: -2,
+      }}
+    >
       <div
         style={{
-          height: "100%",
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#000000",
-          color: "#ffffff",
-          fontFamily: "sans-serif",
-          letterSpacing: -2,
+          fontSize: 140,
+          fontWeight: 700,
+          lineHeight: 1,
         }}
       >
-        <div
-          style={{
-            fontSize: 140,
-            fontWeight: 700,
-            lineHeight: 1,
-          }}
-        >
-          Yuyeyyy
-        </div>
-        <div
-          style={{
-            fontSize: 36,
-            opacity: 0.6,
-            marginTop: 24,
-            letterSpacing: 0,
-            fontWeight: 400,
-          }}
-        >
-          Graphics · Rendering · Shader
-        </div>
+        Yuyeyyy
       </div>
-    ),
-    { ...size }
+      <div
+        style={{
+          fontSize: 36,
+          opacity: 0.6,
+          marginTop: 24,
+          letterSpacing: 0,
+          fontWeight: 400,
+        }}
+      >
+        Graphics · Rendering · Shader
+      </div>
+    </div>,
+    { ...size },
   );
 }

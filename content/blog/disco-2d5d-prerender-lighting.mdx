@@ -1,0 +1,120 @@
+---
+title: "2D 面片仿 3D 渲染方案：AI 辅助预渲染与全屏坐标重建"
+date: "2026-07-24"
+category: "Pipeline / 2.5D"
+description: "用 AI 出法线图与深度图做离线预渲染，在 URP 里通过 RenderFeature 重建世界坐标并回写 Z-Buffer，让 2D 面片接收实时光照并与 3D 动态物体正确遮挡。"
+tags: ["URP", "RenderFeature", "2.5D", "Lighting", "Disco Elysium"]
+---
+
+> 跟着开发日志尝试复刻了一下 Disco 的方案。这里记录第三条路：AI 辅助预渲染 + 全屏世界重建。
+>
+> 如有错误或建议，还望大佬们指出。
+
+<Video bilibili="BV1Jtja6wEAq" caption="2.5D 室内光照系统预渲染 —— 最终效果" />
+
+## 从插片说起：2D 仿 3D 的传统思路
+
+说到用 2D 面片来仿照 3D 效果，首先想到的就是插片树和插片头发，通过面片的穿插来制造 3D 的体积感。相关思路可以参考《【风格化植物】插片树的 LOD 解决方案》。
+
+除此之外还有几条常见路线：
+
+- **通过偏移 2D 面片速度来模拟纵深效果** —— 见《Shader 入门精要》；
+- **通过法线丰富 2D 光影细节** —— 见《高质量 2D 像素游戏渲染方法》。
+
+传统的渲染要么是全 3D（消耗大，美术上限受限于引擎），要么是 2D 纯背景（动态物体无法与背景产生真实的光影和遮挡）。
+
+<Figure
+  src="/assets/blog/disco-2d5d/scene-overview.jpg"
+  alt="等轴测视角的室内场景，房间被斜切剖面切开，可见卧室、浴室、客厅三个区域"
+  caption="目标效果：等轴测剖面室内场景，光影与遮挡都要能实时响应"
+/>
+
+## 新思路：AI 辅助预渲染 + 全屏世界重建
+
+随着 AI 发展越来越迅速，2D 出图稳定性越来越高。思路是：通过 AI 大模型出**世界法线图**和**深度图**，用 RenderFeature 重构世界坐标，结合一些特定的 trick 来还原类似 3D 游戏的光影信息。
+
+这一套流程应该可以应用于小型摄像机视角固定的**箱庭式游戏**，或者用在**过场动画**中。
+
+整体分三个步骤。
+
+### 步骤一：AI 辅助离线渲染
+
+美术通过三辅二来绘制底色图（Base Color），再通过 AI 生成法线图（Normal）和深度图（Depth）。
+
+**深度图**：使用 WebUI 出图。
+
+<Figure
+  src="/assets/blog/disco-2d5d/webui-depth.jpg"
+  alt="Stable Diffusion WebUI 的 ControlNet 面板，Control Type 选中 Depth（深度图），预处理器为 canny，模型为 InstantX-FLUX.1-dev-Controlnet"
+  caption="WebUI 的 ControlNet 面板：Control Type 切到 Depth（深度图）出图。图中预处理器 canny、模型 InstantX-FLUX.1-dev-Controlnet，控制权重 0.6、起始步数 0、完结步数 0.6，Preprocessor resolution 512，Canny 低/高阈值 100 / 200，control mode 均衡，缩放模式裁剪"
+/>
+
+**世界法线 AI 图**：通过 nano banana 抽卡，不对的地方局部重绘 + PS 微调。（OpenAI 模型没有尝试……）
+
+### 步骤二：全屏重建
+
+在 Unity URP 中，使用一个全屏 Shader，利用预渲染的深度图还原出每个像素的 3D 世界坐标，然后结合预渲染的世界法线图，接受 Unity 场景中的实时灯光。
+
+**核心**：把离线渲染的 0~1 线性深度转换为正确的 Device Depth，使用 `ComputeWorldSpacePosition` 函数，利用 UV、转换后的深度和相机的逆视锥投影矩阵（`UNITY_MATRIX_I_VP`），凭空计算出这个 2D 像素原本在 3D 空间中的真实世界坐标。
+
+```hlsl
+float offlineLinearDepth = 1 - SAMPLE_TEXTURE2D(_OfflineDepthTex, sampler_OfflineDepthTex, uv).r;
+
+float deviceDepth = offlineLinearDepth;
+#if UNITY_REVERSED_Z
+    deviceDepth = 1.0 - offlineLinearDepth;
+#endif
+
+float3 worldPos = ComputeWorldSpacePosition(uv, deviceDepth, UNITY_MATRIX_I_VP);
+```
+
+有了世界坐标和法线，Shader 就可以像对待真实 3D 模型一样，计算主光源的漫反射和阴影衰减。
+
+### 步骤三：深度回写
+
+将预渲染的深度转化为设备的硬件深度并强行写入 Z-Buffer。这是让后续 3D 动态物体产生正确遮挡的关键。
+
+在 C# 端，把上面 Shader 画出来的颜色和深度塞进管线：
+
+```csharp
+var colorHandle = renderingData.cameraData.renderer.cameraColorTargetHandle;
+var depthHandle = renderingData.cameraData.renderer.cameraDepthTargetHandle;
+
+//强制设定渲染目标。
+// ClearFlag.None我们直接在现有画面上盖上去，而不清空已有的数据
+CoreUtils.SetRenderTarget(cmd, colorHandle, depthHandle, ClearFlag.None, Color.clear);
+
+cmd.DrawMesh(RenderingUtils.fullscreenMesh, Matrix4x4.identity, material, 0, 0);
+```
+
+动态物体场景中出现不可见的碰撞体，或者需要接收阴影的复杂几何体，不输出任何颜色、画面上完全不可见，但是开启深度写入和深度测试：
+
+```hlsl
+ColorMask 0
+ZWrite On
+ZTest LEqual
+```
+
+这样就得到了一套自定义的 FakeDeferred 渲染管线。
+
+## 光场贴图：极乐迪斯科的室内光照系统
+
+除了预渲染方案，《极乐迪斯科》还有一个有意思的室内光照系统，里面采样了**光场贴图**。
+
+这张光场贴图描述了二维空间中每个点上单束光线的方向和强度。
+
+<Figure
+  src="/assets/blog/disco-2d5d/lightfield.jpg"
+  alt="模糊的光场贴图，画面由绿、青、红等色块构成，中间有一圈亮绿色的边界线"
+  caption="光场贴图（白色团块是 Alpha 通道，我们用它来模拟间接光照：靠近窗户的低 Alpha 值会产生强烈的方向性光照，带来更明显的明暗对比和阴影；而高 Alpha 值则意味着光线更多地进行反弹。因此，着色器会让光线更多地绕射到物体周围，并稍微提亮暗部和阴影。）"
+/>
+
+lightfield 图搓得有点糙，边界线歪了，暂且不想改了。
+
+## 小结
+
+整套流程走下来，2.5D 场景光照系统终于把 bug 修好了。7/23 修正了影子的 bug。
+
+2D 混 3D 确实挺抽象的，本体截帧截不下来。感谢 Π 哥 @歪比歪比 的 debug 帮助——会引擎会编程到底是种什么感受。
+
+参考：《Unity 中模拟「极乐 disco」渲染方式，运用 AI 绘图的渲染管线流程》。

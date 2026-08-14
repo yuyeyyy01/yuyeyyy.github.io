@@ -32,12 +32,16 @@ export default function PostAdmin() {
   const router = useRouter();
   const [list, setList] = useState<PostMeta[]>([]);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(
+    null,
+  );
 
   async function loadList() {
     setLoading(true);
     try {
-      const res = await fetch(api("/api/admin/posts"), { credentials: "include" });
+      const res = await fetch(api("/api/admin/posts"), {
+        credentials: "include",
+      });
       const d = (await res.json()) as { posts?: PostMeta[] };
       setList(d.posts ?? []);
     } finally {
@@ -95,7 +99,9 @@ export default function PostAdmin() {
             >
               <button
                 onClick={() =>
-                  router.push(`/admin/editor?slug=${encodeURIComponent(p.slug)}`)
+                  router.push(
+                    `/admin/editor?slug=${encodeURIComponent(p.slug)}`,
+                  )
                 }
                 className="flex-1 text-left"
               >

@@ -84,7 +84,9 @@ export default function Figure({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={resolvedAlt ? `在新窗口打开：${resolvedAlt}` : "在新窗口打开原图"}
+      aria-label={
+        resolvedAlt ? `在新窗口打开：${resolvedAlt}` : "在新窗口打开原图"
+      }
     >
       {imageEl}
     </a>
@@ -93,17 +95,9 @@ export default function Figure({
   );
 
   return (
-    <figure
-      className={cn(
-        "my-8 flex flex-col items-center",
-        wrapperClassName,
-      )}
-    >
+    <figure className={cn("my-8 flex flex-col items-center", wrapperClassName)}>
       <div
-        className={cn(
-          "w-full",
-          width ? "mx-auto" : "w-full",
-        )}
+        className={cn("w-full", width ? "mx-auto" : "w-full")}
         style={width ? { maxWidth: width } : undefined}
       >
         {inner}

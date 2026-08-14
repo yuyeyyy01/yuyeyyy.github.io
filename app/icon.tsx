@@ -17,25 +17,23 @@ export const contentType = "image/png";
 
 export default function Icon() {
   return new ImageResponse(
-    (
-      <div
-        style={{
-          height: "100%",
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#070708",
-          fontSize: 26,
-          fontWeight: 700,
-          color: "#4fd2c6",
-          fontFamily: "monospace",
-          letterSpacing: -1,
-        }}
-      >
-        §
-      </div>
-    ),
-    { ...size }
+    <div
+      style={{
+        height: "100%",
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "#070708",
+        fontSize: 26,
+        fontWeight: 700,
+        color: "#4fd2c6",
+        fontFamily: "monospace",
+        letterSpacing: -1,
+      }}
+    >
+      §
+    </div>,
+    { ...size },
   );
 }

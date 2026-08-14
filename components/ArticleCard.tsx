@@ -38,7 +38,11 @@ export default function ArticleCard({
   const entryProps =
     entryVariant === staggerItem
       ? { variants: entryVariant }
-      : { variants: entryVariant, ...whileInViewConfig, viewport: { once: true, margin: "-60px" } };
+      : {
+          variants: entryVariant,
+          ...whileInViewConfig,
+          viewport: { once: true, margin: "-60px" },
+        };
 
   return (
     <Link
@@ -52,13 +56,12 @@ export default function ArticleCard({
       >
         {/* 顶部元信息：日期 · 分类（mono，材质属性面板 key 行风） */}
         <div className="flex items-center gap-2 font-mono text-[0.7rem]">
-          <time
-            dateTime={date}
-            className="text-[var(--foreground-muted)]"
-          >
+          <time dateTime={date} className="text-[var(--foreground-muted)]">
             {date}
           </time>
-          <span aria-hidden className="text-[var(--foreground-muted)]">·</span>
+          <span aria-hidden className="text-[var(--foreground-muted)]">
+            ·
+          </span>
           <span className="text-[var(--accent)]">{category}</span>
         </div>
 

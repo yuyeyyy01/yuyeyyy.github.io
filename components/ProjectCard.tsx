@@ -45,7 +45,11 @@ export default function ProjectCard({
   const entryProps =
     entryVariant === staggerItem
       ? { variants: entryVariant }
-      : { variants: entryVariant, ...whileInViewConfig, viewport: { once: true, margin: "-60px" } };
+      : {
+          variants: entryVariant,
+          ...whileInViewConfig,
+          viewport: { once: true, margin: "-60px" },
+        };
 
   const content = (
     <motion.article

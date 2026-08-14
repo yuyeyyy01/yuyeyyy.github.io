@@ -27,16 +27,12 @@ function hash(password) {
 }
 
 async function main() {
-  const username =
-    process.env.ADMIN_USERNAME ||
-    process.argv[2] ||
-    "";
-  const password =
-    process.env.ADMIN_PASSWORD ||
-    process.argv[3] ||
-    "";
+  const username = process.env.ADMIN_USERNAME || process.argv[2] || "";
+  const password = process.env.ADMIN_PASSWORD || process.argv[3] || "";
   if (!username || !password) {
-    console.error("用法: ADMIN_USERNAME=xxx ADMIN_PASSWORD=yyy node scripts/hash-password.mjs");
+    console.error(
+      "用法: ADMIN_USERNAME=xxx ADMIN_PASSWORD=yyy node scripts/hash-password.mjs",
+    );
     process.exit(1);
   }
   if (password.length < 6) {
@@ -58,10 +54,15 @@ async function main() {
   const { writeFileSync, unlinkSync } = await import("node:fs");
   writeFileSync(tmp, sql, "utf-8");
   try {
-    console.log(`正在写入 D1...${remoteFlag ? "（远程）" : "（本地）"} 用户: ${username}`);
-    execSync(`npx wrangler d1 execute yuyepage-db ${remoteFlag} --file=${tmp} -y`, {
-      stdio: "inherit",
-    });
+    console.log(
+      `正在写入 D1...${remoteFlag ? "（远程）" : "（本地）"} 用户: ${username}`,
+    );
+    execSync(
+      `npx wrangler d1 execute yuyepage-db ${remoteFlag} --file=${tmp} -y`,
+      {
+        stdio: "inherit",
+      },
+    );
     console.log(`✓ 账号已设置（用户名: ${username}）`);
   } finally {
     try {
@@ -71,4 +72,3 @@ async function main() {
 }
 
 main();
-

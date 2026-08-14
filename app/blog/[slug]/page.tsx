@@ -22,7 +22,11 @@ import CodeBlockEnhancer from "@/components/CodeBlockEnhancer";
 import Comments from "@/components/Comments";
 import Scene from "@/components/Scene";
 import ShaderDemo from "@/components/ShaderDemo";
-import { PlaygroundPBR, PlaygroundSSS, PlaygroundHair } from "@/components/PlaygroundPresets";
+import {
+  PlaygroundPBR,
+  PlaygroundSSS,
+  PlaygroundHair,
+} from "@/components/PlaygroundPresets";
 import PBRPlayground from "@/components/PBRPlayground";
 import Figure from "@/components/Figure";
 import Video from "@/components/Video";
@@ -89,9 +93,7 @@ export default async function PostPage({ params }: PageProps) {
                 {post.title}
               </h1>
               <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs text-[var(--foreground-muted)]">
-                <time dateTime={post.date}>
-                  {formatDate(post.date)}
-                </time>
+                <time dateTime={post.date}>{formatDate(post.date)}</time>
                 <Link
                   href="/blog/"
                   className="inline-flex items-center gap-1.5 text-[var(--foreground-soft)] transition-colors hover:text-[var(--accent)]"

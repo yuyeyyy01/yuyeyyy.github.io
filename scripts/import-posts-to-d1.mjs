@@ -37,9 +37,12 @@ function main() {
   writeFileSync(TMP_SQL, sql, "utf-8");
   const remoteFlag = process.env.D1_REMOTE === "1" ? "--remote" : "";
   try {
-    execSync(`npx wrangler d1 execute yuyepage-db ${remoteFlag} --file=${TMP_SQL} -y`, {
-      stdio: "inherit",
-    });
+    execSync(
+      `npx wrangler d1 execute yuyepage-db ${remoteFlag} --file=${TMP_SQL} -y`,
+      {
+        stdio: "inherit",
+      },
+    );
     console.log("导入完成" + (remoteFlag ? "（远程）" : "（本地）"));
   } finally {
     try {

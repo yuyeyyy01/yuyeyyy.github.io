@@ -121,9 +121,7 @@ function StatCard({ stat }: { stat: StatNode }) {
       <div
         className={
           "font-mono font-semibold leading-none text-[var(--accent)] " +
-          (stat.isDate
-            ? "text-base md:text-lg"
-            : "text-2xl md:text-3xl")
+          (stat.isDate ? "text-base md:text-lg" : "text-2xl md:text-3xl")
         }
       >
         {stat.value}

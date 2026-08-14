@@ -171,13 +171,7 @@ export default function TagCloud({ posts, tags }: TagCloudProps) {
  * 选中标签后的文章列表：framegraph pass 节点风。
  * 每项：mono 日期 · 分类 + 宋体标题（链接到 /blog/[slug]/）。
  */
-function TagResultList({
-  tag,
-  posts,
-}: {
-  tag: string;
-  posts: TagCloudPost[];
-}) {
+function TagResultList({ tag, posts }: { tag: string; posts: TagCloudPost[] }) {
   return (
     <motion.div
       key={tag}

@@ -18,7 +18,8 @@ const warns = [];
 // --- 1. swizzle 合法性：对已知类型的变量检查分量数 ---
 // 收集局部声明的类型
 const varTypes = new Map();
-const declRe = /\b(float|vec2|vec3|vec4|mat2|int)\s+([A-Za-z_]\w*)\s*(?:=|;|,|\))/g;
+const declRe =
+  /\b(float|vec2|vec3|vec4|mat2|int)\s+([A-Za-z_]\w*)\s*(?:=|;|,|\))/g;
 let dm;
 while ((dm = declRe.exec(glsl))) varTypes.set(dm[2], dm[1]);
 // uniform 也算
@@ -38,7 +39,9 @@ while ((sm = swizRe.exec(glsl))) {
     const idx = order.indexOf(c);
     if (idx >= 0 && idx >= w) {
       const ln = glsl.slice(0, sm.index).split("\n").length;
-      errors.push(`第 ${ln} 行 swizzle 越界: ${name}(${ty}).${comps} —— .${c} 超出 ${w} 分量`);
+      errors.push(
+        `第 ${ln} 行 swizzle 越界: ${name}(${ty}).${comps} —— .${c} 超出 ${w} 分量`,
+      );
     }
   }
 }
@@ -47,7 +50,9 @@ while ((sm = swizRe.exec(glsl))) {
 //     但数组必须是显式常量大小；同时检查未声明 RIPPLE_COUNT 却使用的情况 ---
 if (/uniform\s+vec3\s+uRipples\s*\[\s*RIPPLE_COUNT\s*\]/.test(glsl)) {
   if (!/const\s+int\s+RIPPLE_COUNT\s*=\s*\d+/.test(glsl)) {
-    errors.push("uRipples 用 RIPPLE_COUNT 作上界，但缺少 const int RIPPLE_COUNT 声明");
+    errors.push(
+      "uRipples 用 RIPPLE_COUNT 作上界，但缺少 const int RIPPLE_COUNT 声明",
+    );
   }
 }
 
@@ -57,7 +62,8 @@ lines.forEach((ln, i) => {
   if (!s || s.startsWith("#")) return;
   // float 变量赋整数字面量，如 float x = 1;  (排除 for 里的 int i = 0)
   const m = s.match(/\bfloat\s+\w+\s*=\s*(-?\d+)\s*[;,)]/);
-  if (m) errors.push(`第 ${i + 1} 行 float 赋整数字面量（需写 ${m[1]}.0）: ${s}`);
+  if (m)
+    errors.push(`第 ${i + 1} 行 float 赋整数字面量（需写 ${m[1]}.0）: ${s}`);
   // vec 构造里出现纯整数
   const vm = s.match(/\bvec[234]\s*\(([^)]*)\)/g);
   if (vm) {
@@ -66,7 +72,9 @@ lines.forEach((ln, i) => {
       for (const a of args) {
         const t = a.trim();
         if (/^-?\d+$/.test(t)) {
-          errors.push(`第 ${i + 1} 行 vec 构造含整数字面量 "${t}"（需写 ${t}.0）: ${s}`);
+          errors.push(
+            `第 ${i + 1} 行 vec 构造含整数字面量 "${t}"（需写 ${t}.0）: ${s}`,
+          );
         }
       }
     }
@@ -79,7 +87,9 @@ let fm;
 while ((fm = fnRe.exec(glsl))) {
   const [, retTy, name] = fm;
   // 截取函数体
-  let depth = 0, i = glsl.indexOf("{", fm.index), start = i;
+  let depth = 0,
+    i = glsl.indexOf("{", fm.index),
+    start = i;
   do {
     if (glsl[i] === "{") depth++;
     else if (glsl[i] === "}") depth--;
@@ -94,7 +104,11 @@ while ((fm = fnRe.exec(glsl))) {
   for (const r of rets) {
     // 检查明显的类型不符：返回 vec3(...) 而声明 float 之类
     const ctor = r.match(/^(vec[234]|float)\s*\(/);
-    if (ctor && ctor[1] !== retTy && !(retTy === "float" && ctor[1] === "float")) {
+    if (
+      ctor &&
+      ctor[1] !== retTy &&
+      !(retTy === "float" && ctor[1] === "float")
+    ) {
       if (widthOf[ctor[1]] !== widthOf[retTy]) {
         errors.push(`函数 ${name} 声明 ${retTy}，却 return ${ctor[1]}(...)`);
       }

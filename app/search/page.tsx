@@ -22,7 +22,10 @@ interface SearchResult {
 /** pagefind 模块的最小类型（开发时该模块尚不存在，构建后由 pagefind 生成） */
 interface PagefindModule {
   init: (opts?: Record<string, unknown>) => Promise<unknown>;
-  search: (query: string, opts?: Record<string, unknown>) => Promise<{
+  search: (
+    query: string,
+    opts?: Record<string, unknown>,
+  ) => Promise<{
     results: Array<{
       id: string;
       data: () => Promise<{
@@ -72,7 +75,8 @@ export default function SearchPage() {
     (async () => {
       try {
         const mod = (await import(
-          /* webpackIgnore: true */ window.location.origin + `${BASE_PATH}/pagefind/pagefind.js`
+          /* webpackIgnore: true */ window.location.origin +
+            `${BASE_PATH}/pagefind/pagefind.js`
         )) as PagefindModule;
         if (cancelled) return;
         await mod.init();
@@ -118,7 +122,7 @@ export default function SearchPage() {
               excerpt: d.excerpt,
               description: d.meta_description,
             };
-          })
+          }),
         );
         setResults(items);
       } catch {
@@ -192,8 +196,8 @@ export default function SearchPage() {
         {/* 索引加载失败（通常是开发环境未生成 pagefind） */}
         {loadError && (
           <p className="text-sm text-[var(--foreground-muted)]">
-            搜索索引尚未生成。请先执行 <code className="font-mono">npm run index</code>{" "}
-            构建索引后再试。
+            搜索索引尚未生成。请先执行{" "}
+            <code className="font-mono">npm run index</code> 构建索引后再试。
           </p>
         )}
 

@@ -58,7 +58,9 @@ const PRELUDE_LINES = 6;
 
 type UniformValue = number | [number, number, number];
 
-function initUniforms(controls: UniformControl[] | undefined): Record<string, UniformValue> {
+function initUniforms(
+  controls: UniformControl[] | undefined,
+): Record<string, UniformValue> {
   const out: Record<string, UniformValue> = {};
   for (const c of controls ?? []) out[c.name] = c.default;
   return out;
@@ -75,9 +77,19 @@ function remapError(log: string): string {
 /** hex (#rrggbb) → [r,g,b] 0..1 */
 function hexToRgb(hex: string): [number, number, number] {
   const h = hex.replace("#", "");
-  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const full =
+    h.length === 3
+      ? h
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : h;
   const num = parseInt(full, 16);
-  return [((num >> 16) & 255) / 255, ((num >> 8) & 255) / 255, (num & 255) / 255];
+  return [
+    ((num >> 16) & 255) / 255,
+    ((num >> 8) & 255) / 255,
+    (num & 255) / 255,
+  ];
 }
 
 /** [r,g,b] 0..1 → #rrggbb */
@@ -97,14 +109,18 @@ export default function ShaderPlayground({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const lineNoRef = useRef<HTMLDivElement>(null);
-  const uniformsRef = useRef<Record<string, UniformValue>>(initUniforms(uniforms));
-
-  // UI state（仅在需要时触发重渲染）
-  const [uniformValues, setUniformValues] = useState<Record<string, UniformValue>>(() =>
+  const uniformsRef = useRef<Record<string, UniformValue>>(
     initUniforms(uniforms),
   );
+
+  // UI state（仅在需要时触发重渲染）
+  const [uniformValues, setUniformValues] = useState<
+    Record<string, UniformValue>
+  >(() => initUniforms(uniforms));
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "compiling" | "ok" | "fail">("idle");
+  const [status, setStatus] = useState<"idle" | "compiling" | "ok" | "fail">(
+    "idle",
+  );
   const [fragSrc, setFragSrc] = useState(fragment); // debounce 后触发编译
 
   // ---- 主编译 + 渲染 effect（依赖 fragSrc）----
@@ -174,7 +190,8 @@ export default function ShaderPlayground({
     const uRes = gl.getUniformLocation(prog, "iResolution");
     // 缓存用户 uniform location
     const userLocs: Record<string, WebGLUniformLocation | null> = {};
-    for (const c of uniforms) userLocs[c.name] = gl.getUniformLocation(prog, c.name);
+    for (const c of uniforms)
+      userLocs[c.name] = gl.getUniformLocation(prog, c.name);
 
     function resize() {
       if (!canvas) return;
@@ -273,33 +290,36 @@ export default function ShaderPlayground({
     }
   }, []);
 
-  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key !== "Tab") return;
-    e.preventDefault();
-    const ta = e.currentTarget;
-    const { selectionStart: s, selectionEnd: en, value } = ta;
-    if (s === en) {
-      // 无选区：插 2 空格
-      const nv = value.slice(0, s) + "  " + value.slice(en);
-      ta.value = nv;
-      ta.selectionStart = ta.selectionEnd = s + 2;
-    } else {
-      // 有选区：每行行首加/去 2 空格
-      const lines = value.split("\n");
-      const startLine = value.slice(0, s).split("\n").length - 1;
-      const endLine = value.slice(0, en).split("\n").length - 1;
-      const shift = e.shiftKey;
-      for (let i = startLine; i <= endLine; i++) {
-        if (shift) {
-          lines[i] = lines[i].replace(/^ {1,2}/, "");
-        } else {
-          lines[i] = "  " + lines[i];
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key !== "Tab") return;
+      e.preventDefault();
+      const ta = e.currentTarget;
+      const { selectionStart: s, selectionEnd: en, value } = ta;
+      if (s === en) {
+        // 无选区：插 2 空格
+        const nv = value.slice(0, s) + "  " + value.slice(en);
+        ta.value = nv;
+        ta.selectionStart = ta.selectionEnd = s + 2;
+      } else {
+        // 有选区：每行行首加/去 2 空格
+        const lines = value.split("\n");
+        const startLine = value.slice(0, s).split("\n").length - 1;
+        const endLine = value.slice(0, en).split("\n").length - 1;
+        const shift = e.shiftKey;
+        for (let i = startLine; i <= endLine; i++) {
+          if (shift) {
+            lines[i] = lines[i].replace(/^ {1,2}/, "");
+          } else {
+            lines[i] = "  " + lines[i];
+          }
         }
+        ta.value = lines.join("\n");
       }
-      ta.value = lines.join("\n");
-    }
-    onCodeChange(ta.value);
-  }, [onCodeChange]);
+      onCodeChange(ta.value);
+    },
+    [onCodeChange],
+  );
 
   return (
     <div className={"card overflow-hidden " + (className ?? "")}>
@@ -377,7 +397,11 @@ export default function ShaderPlayground({
   );
 }
 
-function StatusDot({ status }: { status: "idle" | "compiling" | "ok" | "fail" }) {
+function StatusDot({
+  status,
+}: {
+  status: "idle" | "compiling" | "ok" | "fail";
+}) {
   const color =
     status === "compiling"
       ? "bg-[var(--accent-warm)] animate-pulse"
@@ -409,21 +433,27 @@ function UniformRow({
     const hex = rgbToHex(rgb);
     return (
       <div className="flex items-center gap-3 py-1.5">
-        <span className="w-24 font-mono text-[0.7rem] text-[var(--foreground-muted)]">{label}</span>
+        <span className="w-24 font-mono text-[0.7rem] text-[var(--foreground-muted)]">
+          {label}
+        </span>
         <input
           type="color"
           value={hex}
           onChange={(e) => onChange(hexToRgb(e.target.value))}
           className="h-6 w-10 cursor-pointer rounded border border-[var(--border)] bg-transparent"
         />
-        <span className="font-mono text-[0.7rem] text-[var(--foreground-muted)]">{hex}</span>
+        <span className="font-mono text-[0.7rem] text-[var(--foreground-muted)]">
+          {hex}
+        </span>
       </div>
     );
   }
   const num = value as number;
   return (
     <div className="flex items-center gap-3 py-1.5">
-      <span className="w-24 font-mono text-[0.7rem] text-[var(--foreground-muted)]">{label}</span>
+      <span className="w-24 font-mono text-[0.7rem] text-[var(--foreground-muted)]">
+        {label}
+      </span>
       <input
         type="range"
         min={control.min ?? 0}

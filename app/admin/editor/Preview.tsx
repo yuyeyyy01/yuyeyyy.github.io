@@ -28,7 +28,10 @@ function maskMdxComponents(md: string): string {
   let out = md;
   for (const name of MDX_COMPONENTS) {
     // 匹配 <Scene .../> 或 <Scene ...>...</Scene>（含跨行）
-    const re = new RegExp(`<${name}(\\s[^>]*)?/>|<${name}(\\s[^>]*)?>([\\s\\S]*?)</${name}>`, "g");
+    const re = new RegExp(
+      `<${name}(\\s[^>]*)?/>|<${name}(\\s[^>]*)?>([\\s\\S]*?)</${name}>`,
+      "g",
+    );
     out = out.replace(re, (m) => `\n\n⟨MDX 组件：${name}⟩\n\n`);
   }
   return out;

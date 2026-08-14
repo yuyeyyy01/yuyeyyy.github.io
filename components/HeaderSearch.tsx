@@ -16,7 +16,10 @@ import { BASE_PATH } from "@/lib/site";
 
 interface PagefindModule {
   init: (opts?: Record<string, unknown>) => Promise<unknown>;
-  search: (query: string, opts?: Record<string, unknown>) => Promise<{
+  search: (
+    query: string,
+    opts?: Record<string, unknown>,
+  ) => Promise<{
     results: Array<{
       id: string;
       data: () => Promise<{
@@ -61,7 +64,8 @@ export default function HeaderSearch() {
     (async () => {
       try {
         const mod = (await import(
-          /* webpackIgnore: true */ window.location.origin + `${BASE_PATH}/pagefind/pagefind.js`
+          /* webpackIgnore: true */ window.location.origin +
+            `${BASE_PATH}/pagefind/pagefind.js`
         )) as PagefindModule;
         if (cancelled) return;
         await mod.init();
@@ -125,7 +129,8 @@ export default function HeaderSearch() {
   function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
       const q = query.trim();
-      if (q) window.location.href = `${BASE_PATH}/search/?q=${encodeURIComponent(q)}`;
+      if (q)
+        window.location.href = `${BASE_PATH}/search/?q=${encodeURIComponent(q)}`;
     } else if (e.key === "Escape") {
       setOpen(false);
       inputRef.current?.blur();
@@ -133,7 +138,9 @@ export default function HeaderSearch() {
   }
 
   const showDropdown =
-    open && query.trim().length > 0 && (searching || results.length > 0 || ready);
+    open &&
+    query.trim().length > 0 &&
+    (searching || results.length > 0 || ready);
 
   return (
     <div ref={containerRef} className="relative">
@@ -175,7 +182,10 @@ export default function HeaderSearch() {
           style={{ minWidth: "20rem" }}
         >
           {/* 顶部 accent 线（pass 节点风） */}
-          <span aria-hidden className="block h-0.5 w-full bg-[var(--accent)] opacity-50" />
+          <span
+            aria-hidden
+            className="block h-0.5 w-full bg-[var(--accent)] opacity-50"
+          />
           {results.length > 0 ? (
             <ul className="max-h-80 overflow-y-auto">
               {results.map((r) => (

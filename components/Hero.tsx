@@ -39,7 +39,10 @@ export default function Hero() {
   }
 
   // 锚点跳转：程序化平滑滚动，不依赖全局 scroll-behavior
-  function handleAnchorClick(e: React.MouseEvent<HTMLAnchorElement>, href: string) {
+  function handleAnchorClick(
+    e: React.MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) {
     if (href.startsWith("#") && href.length > 1) {
       const el = document.querySelector(href);
       if (el) {
@@ -104,12 +107,19 @@ export default function Hero() {
           variants={staggerItem}
           className="mt-6 max-w-xl text-base leading-relaxed text-[var(--foreground-soft)] md:text-lg"
         >
-          在做 Unity / URP 渲染与 Shader 开发。这里记录 PBR、皮肤与头发渲染、Portal、水体、体积光的折腾笔记。
+          在做 Unity / URP 渲染与 Shader 开发。这里记录
+          PBR、皮肤与头发渲染、Portal、水体、体积光的折腾笔记。
         </motion.p>
 
         {/* CTA：左对齐，非居中 */}
-        <motion.div variants={staggerItem} className="mt-10 flex items-center gap-3">
-          <Link href="/blog/" className="btn-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-sm">
+        <motion.div
+          variants={staggerItem}
+          className="mt-10 flex items-center gap-3"
+        >
+          <Link
+            href="/blog/"
+            className="btn-primary inline-flex items-center gap-1.5 px-5 py-2.5 text-sm"
+          >
             查看文章
             <ArrowRight size={15} className="-translate-y-px" />
           </Link>
@@ -123,7 +133,10 @@ export default function Hero() {
         </motion.div>
 
         {/* 头像 + 名字小行：放在标题区下方左侧，不再居中大头像 */}
-        <motion.div variants={staggerItem} className="mt-12 flex items-center gap-3">
+        <motion.div
+          variants={staggerItem}
+          className="mt-12 flex items-center gap-3"
+        >
           <Image
             src={avatarImg}
             alt="Yuyeyyy"
@@ -134,7 +147,9 @@ export default function Hero() {
           />
           <div className="font-mono text-xs text-[var(--foreground-muted)]">
             <span className="text-[var(--foreground-soft)]">Yuyeyyy</span>
-            <span className="mx-1.5" aria-hidden>·</span>
+            <span className="mx-1.5" aria-hidden>
+              ·
+            </span>
             <span>Graphics / Rendering</span>
           </div>
         </motion.div>
@@ -150,7 +165,9 @@ export default function Hero() {
         transition={{ delay: 1.1, duration: DUR.slow, ease: easeOut }}
         className="absolute inset-x-0 bottom-6 z-20 mx-auto flex w-fit flex-col items-center gap-1 text-[var(--foreground-muted)] transition-opacity duration-300 hover:text-[var(--foreground-soft)]"
       >
-        <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em]">向下探索</span>
+        <span className="font-mono text-[0.65rem] uppercase tracking-[0.18em]">
+          向下探索
+        </span>
         <ChevronDown size={16} aria-hidden className="hero-scroll-cue" />
       </motion.a>
     </section>

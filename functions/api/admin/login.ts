@@ -58,10 +58,13 @@ export const onRequestPost: PagesFunction<EnvContext["env"]> = async (ctx) => {
 
   const username = (data.username ?? "").trim();
   const password = data.password ?? "";
-  if (!username || !password) return json({ error: "用户名或密码不能为空" }, 400);
+  if (!username || !password)
+    return json({ error: "用户名或密码不能为空" }, 400);
 
   const row = await ctx.env.yuyepage_db
-    .prepare("SELECT password_hash, salt, iterations FROM admins WHERE username = ?")
+    .prepare(
+      "SELECT password_hash, salt, iterations FROM admins WHERE username = ?",
+    )
     .bind(username)
     .first<{ password_hash: string; salt: string; iterations: number }>();
 
@@ -70,7 +73,12 @@ export const onRequestPost: PagesFunction<EnvContext["env"]> = async (ctx) => {
     return json({ error: "用户名或密码错误" }, 401);
   }
 
-  const ok = await verifyPassword(password, row.salt, row.password_hash, row.iterations);
+  const ok = await verifyPassword(
+    password,
+    row.salt,
+    row.password_hash,
+    row.iterations,
+  );
   if (!ok) return json({ error: "用户名或密码错误" }, 401);
 
   const secret = ctx.env.ADMIN_TOKEN;

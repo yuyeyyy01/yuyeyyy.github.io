@@ -133,7 +133,9 @@ async function renderList(env: CloudflareEnv, url: URL): Promise<Response> {
   const cardsWithTags = posts
     .map((p) => {
       let tags: string[] = [];
-      try { tags = JSON.parse(p.tags || "[]"); } catch {}
+      try {
+        tags = JSON.parse(p.tags || "[]");
+      } catch {}
       return `
       <a href="/blog/${esc(p.slug)}/" class="group block h-full" aria-label="${esc(p.title)}" data-tags="${esc(tags.join(","))}">
         <article class="card flex h-full flex-col p-6 transition-all duration-300 ease-out group-hover:-translate-y-1 group-hover:border-[var(--border-strong)] group-hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
@@ -161,28 +163,42 @@ async function renderList(env: CloudflareEnv, url: URL): Promise<Response> {
         <p class="mt-4 text-[var(--foreground-soft)]">图形学 / Shader 学习笔记与踩坑记录</p>
       </header>
       ${tagsHtml}
-      ${posts.length === 0
-        ? '<p class="text-[var(--foreground-muted)]">还没有文章。</p>'
-        : `<div id="post-grid" class="grid grid-cols-1 gap-6 md:grid-cols-2">${cardsWithTags}</div>`
+      ${
+        posts.length === 0
+          ? '<p class="text-[var(--foreground-muted)]">还没有文章。</p>'
+          : `<div id="post-grid" class="grid grid-cols-1 gap-6 md:grid-cols-2">${cardsWithTags}</div>`
       }
     </main>
     ${sortedTags.length > 0 ? tagScript : ""}`;
 
-  return htmlResponse(env, url, "文章 — Yuyeyyy", "图形学、Shader 与渲染管线的学习笔记与踩坑记录。", body);
+  return htmlResponse(
+    env,
+    url,
+    "文章 — Yuyeyyy",
+    "图形学、Shader 与渲染管线的学习笔记与踩坑记录。",
+    body,
+  );
 }
 
 // ---------------------------------------------------------------------------
 // 文章详情
 // ---------------------------------------------------------------------------
 
-async function renderPost(env: CloudflareEnv, url: URL, slug: string): Promise<Response> {
+async function renderPost(
+  env: CloudflareEnv,
+  url: URL,
+  slug: string,
+): Promise<Response> {
   const post = await env.yuyepage_db
     .prepare("SELECT * FROM posts WHERE slug = ? AND published = 1")
     .bind(slug)
     .first<PostRow>();
 
   if (!post) {
-    return new Response("文章不存在", { status: 404, headers: { "content-type": "text/plain; charset=utf-8" } });
+    return new Response("文章不存在", {
+      status: 404,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
   }
 
   // 预处理 MDX 自定义组件 → HTML
@@ -238,7 +254,13 @@ async function renderPost(env: CloudflareEnv, url: URL, slug: string): Promise<R
       </div>
     </main>`;
 
-  return htmlResponse(env, url, `${post.title} — Yuyeyyy`, post.description, body);
+  return htmlResponse(
+    env,
+    url,
+    `${post.title} — Yuyeyyy`,
+    post.description,
+    body,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -260,7 +282,8 @@ async function htmlResponse(
     if (templateRes.ok) {
       const html = await templateRes.text();
       // 提取所有 <link rel="stylesheet"> 和 <style> 标签
-      const linkMatches = html.match(/<link[^>]*rel="stylesheet"[^>]*>/gi) ?? [];
+      const linkMatches =
+        html.match(/<link[^>]*rel="stylesheet"[^>]*>/gi) ?? [];
       const styleMatches = html.match(/<style[\s\S]*?<\/style>/gi) ?? [];
       cssLinks = [...linkMatches, ...styleMatches].join("\n");
     }
@@ -364,7 +387,7 @@ function preprocessMdx(md: string): string {
 
   // canvas id 计数器：每个 demo 一个唯一 id，避免页面内多个 demo 冲突
   let canvasSeq = 0;
-  const nextId = () => "ssr-demo-" + (++canvasSeq);
+  const nextId = () => "ssr-demo-" + ++canvasSeq;
 
   // 把一段 HTML 块存进占位符表，返回唯一占位符（HTML 注释，marked 原样保留）
   const stash = (html: string): string => {
@@ -377,77 +400,107 @@ function preprocessMdx(md: string): string {
   result = result.replace(
     /<Video\s+bilibili="([^"]+)"(?:\s+caption="([^"]*)")?\s*\/?>/g,
     (_, bvid, caption) => {
-      const cap = caption ? `<p class="mt-2 text-center text-sm text-[var(--foreground-muted)]">${esc(caption)}</p>` : "";
-      return stash(`<div class="my-6"><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:var(--radius-xl)"><iframe src="//player.bilibili.com/player.html?bvid=${esc(bvid)}&high_quality=1&autoplay=0" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allowfullscreen allow="fullscreen"></iframe></div>${cap}</div>`);
+      const cap = caption
+        ? `<p class="mt-2 text-center text-sm text-[var(--foreground-muted)]">${esc(caption)}</p>`
+        : "";
+      return stash(
+        `<div class="my-6"><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:var(--radius-xl)"><iframe src="//player.bilibili.com/player.html?bvid=${esc(bvid)}&high_quality=1&autoplay=0" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allowfullscreen allow="fullscreen"></iframe></div>${cap}</div>`,
+      );
     },
   );
 
   result = result.replace(
     /<Video\s+youtube="([^"]+)"(?:\s+caption="([^"]*)")?\s*\/?>/g,
     (_, vid, caption) => {
-      const cap = caption ? `<p class="mt-2 text-center text-sm text-[var(--foreground-muted)]">${esc(caption)}</p>` : "";
-      return stash(`<div class="my-6"><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:var(--radius-xl)"><iframe src="https://www.youtube.com/embed/${esc(vid)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allowfullscreen allow="fullscreen"></iframe></div>${cap}</div>`);
+      const cap = caption
+        ? `<p class="mt-2 text-center text-sm text-[var(--foreground-muted)]">${esc(caption)}</p>`
+        : "";
+      return stash(
+        `<div class="my-6"><div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:var(--radius-xl)"><iframe src="https://www.youtube.com/embed/${esc(vid)}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" allowfullscreen allow="fullscreen"></iframe></div>${cap}</div>`,
+      );
     },
   );
 
   // <Scene>...children...</Scene> → vanilla WebGL icosahedron mesh
   // children 是 r3f mesh 语法，vanilla 不支持，统一用 icosahedron 暗示自定义 mesh
-  result = result.replace(
-    /<Scene>[\s\S]*?<\/Scene>/g,
-    () => stash(renderSceneHTML({ canvasId: nextId(), height: 320, mesh: 'icosahedron' })),
+  result = result.replace(/<Scene>[\s\S]*?<\/Scene>/g, () =>
+    stash(
+      renderSceneHTML({ canvasId: nextId(), height: 320, mesh: "icosahedron" }),
+    ),
   );
 
   // <Scene autoRotate /> → vanilla WebGL octahedron mesh + 自动旋转
-  result = result.replace(
-    /<Scene\s+autoRotate\s*\/>/g,
-    () => stash(renderSceneHTML({ canvasId: nextId(), height: 320, autoRotate: true, mesh: 'octahedron' })),
+  result = result.replace(/<Scene\s+autoRotate\s*\/>/g, () =>
+    stash(
+      renderSceneHTML({
+        canvasId: nextId(),
+        height: 320,
+        autoRotate: true,
+        mesh: "octahedron",
+      }),
+    ),
   );
 
   // <Scene /> → vanilla WebGL octahedron mesh（静态）
-  result = result.replace(
-    /<Scene\s*\/>/g,
-    () => stash(renderSceneHTML({ canvasId: nextId(), height: 320, autoRotate: false, mesh: 'octahedron' })),
+  result = result.replace(/<Scene\s*\/>/g, () =>
+    stash(
+      renderSceneHTML({
+        canvasId: nextId(),
+        height: 320,
+        autoRotate: false,
+        mesh: "octahedron",
+      }),
+    ),
   );
 
   // <ShaderDemo /> → vanilla WebGL shader demo（全屏 triangle + UV 渐变）
-  result = result.replace(
-    /<ShaderDemo\s*\/>/g,
-    () => stash(renderShaderHTML({ demoId: 'shader-demo', canvasId: nextId(), height: 320 })),
+  result = result.replace(/<ShaderDemo\s*\/>/g, () =>
+    stash(
+      renderShaderHTML({
+        demoId: "shader-demo",
+        canvasId: nextId(),
+        height: 320,
+      }),
+    ),
   );
 
   // <PlaygroundPBR /> → shader + 控件（共用同一 canvasId，让控件 dispatch 的 uniform-change 事件能被 shader IIFE 接收）
-  result = result.replace(
-    /<PlaygroundPBR\s*\/>/g,
-    () => {
-      const id = nextId();
-      return stash(renderShaderHTML({ demoId: 'pbr', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.pbr.uniforms }));
-    },
-  );
+  result = result.replace(/<PlaygroundPBR\s*\/>/g, () => {
+    const id = nextId();
+    return stash(
+      renderShaderHTML({ demoId: "pbr", canvasId: id, height: 320 }) +
+        renderControlsHTML({ canvasId: id, uniforms: DEMOS.pbr.uniforms }),
+    );
+  });
 
   // <PlaygroundSSS /> → shader + 控件
-  result = result.replace(
-    /<PlaygroundSSS\s*\/>/g,
-    () => {
-      const id = nextId();
-      return stash(renderShaderHTML({ demoId: 'sss', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.sss.uniforms }));
-    },
-  );
+  result = result.replace(/<PlaygroundSSS\s*\/>/g, () => {
+    const id = nextId();
+    return stash(
+      renderShaderHTML({ demoId: "sss", canvasId: id, height: 320 }) +
+        renderControlsHTML({ canvasId: id, uniforms: DEMOS.sss.uniforms }),
+    );
+  });
 
   // <PlaygroundHair /> → shader + 控件
-  result = result.replace(
-    /<PlaygroundHair\s*\/>/g,
-    () => {
-      const id = nextId();
-      return stash(renderShaderHTML({ demoId: 'hair', canvasId: id, height: 320 }) + renderControlsHTML({ canvasId: id, uniforms: DEMOS.hair.uniforms }));
-    },
-  );
+  result = result.replace(/<PlaygroundHair\s*\/>/g, () => {
+    const id = nextId();
+    return stash(
+      renderShaderHTML({ demoId: "hair", canvasId: id, height: 320 }) +
+        renderControlsHTML({ canvasId: id, uniforms: DEMOS.hair.uniforms }),
+    );
+  });
 
   // <Figure ... /> → img
   result = result.replace(
     /<Figure\s+src="([^"]+)"(?:\s+alt="([^"]*)")?(?:\s+caption="([^"]*)")?\s*\/?>/g,
     (_, src, alt, caption) => {
-      const cap = caption ? `<p class="mt-2 text-center text-sm text-[var(--foreground-muted)]">${esc(caption)}</p>` : "";
-      return stash(`<figure class="my-6"><img src="${esc(src)}" alt="${esc(alt || "")}" style="border-radius:var(--radius-xl);max-width:100%" />${cap}</figure>`);
+      const cap = caption
+        ? `<p class="mt-2 text-center text-sm text-[var(--foreground-muted)]">${esc(caption)}</p>`
+        : "";
+      return stash(
+        `<figure class="my-6"><img src="${esc(src)}" alt="${esc(alt || "")}" style="border-radius:var(--radius-xl);max-width:100%" />${cap}</figure>`,
+      );
     },
   );
 
@@ -459,7 +512,9 @@ function preprocessMdx(md: string): string {
 function restoreWebglBlocks(html: string): string {
   let out = html;
   for (let i = 0; i < WEBGL_BLOCK_PLACEHOLDERS.length; i++) {
-    out = out.split(`<!--webgl-block-${i}-->`).join(WEBGL_BLOCK_PLACEHOLDERS[i]);
+    out = out
+      .split(`<!--webgl-block-${i}-->`)
+      .join(WEBGL_BLOCK_PLACEHOLDERS[i]);
   }
   WEBGL_BLOCK_PLACEHOLDERS.length = 0;
   return out;
